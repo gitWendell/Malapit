@@ -2,6 +2,8 @@
 
 A map-based rental marketplace for the Philippines. Renters can browse nearby homes and compare prices. Owners can submit properties, place map pins, upload photos, and manage inquiries.
 
+[Open the Cloudflare test site](https://malapit-test.malapit-ph.workers.dev/). Public browsing is online. Google sign-in works for the configured test account, the owner's reviewer access is verified, and private photo uploads are connected. Google is still in Testing mode: public sign-ups need the remaining branding and privacy-page setup.
+
 This standalone test uses **Cloudflare Workers Free + D1 Free**, with **Supabase Free** for Google sign-in and private photos. It has separate data from the original hosted site. Deployment and provider setup are separate steps; working local tests do not mean live account access is configured.
 
 ## Features

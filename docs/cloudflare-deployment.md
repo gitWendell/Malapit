@@ -25,7 +25,7 @@ Keep `AUTH_MODE` set to `supabase`. Production has no R2 binding. Confirm the ac
 
 ## 2. Prepare Supabase Free
 
-Use the existing project in the **Malapit** organization, not a project in another organization. Confirm its plan is Free. Do not create a duplicate project just to fix a connector permission error; reconnect the integration with access to Malapit instead.
+Use the existing project in the **Malapit** organization, not a project in another organization. Confirm its plan is Free. If a connector reports a permission error, check the organization's authorized apps first. When Malapit is already authorized but the connector still lists another organization, use the signed-in dashboard rather than repeatedly reconnecting or creating duplicate projects.
 
 Create a **private** Storage bucket named `malapit-photos`, with:
 

@@ -1,5 +1,27 @@
 /* A warm, light home for Malapit. The same layout adapts to Android phones. */
 @font-face{font-family:Figtree;src:url('/fonts/figtree-variable.ttf') format('truetype');font-weight:300 900;font-style:normal;font-display:swap}
+.policy-shell{min-height:100dvh;background:var(--surface)}
+.policy-header,.policy-footer{max-width:1100px;margin:auto;padding:25px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.policy-header{border-bottom:1px solid var(--line)}
+.policy-main{max-width:790px;margin:0 auto;padding:58px 32px 64px}
+.policy-intro{padding-bottom:34px;border-bottom:1px solid var(--line)}
+.policy-intro h1{font-size:clamp(32px,5vw,46px);line-height:1.12;letter-spacing:-1.6px;margin:13px 0 18px;font-weight:750}
+.policy-intro>p:not(.eyebrow){font-size:17px;line-height:1.65;color:var(--muted);max-width:590px}
+.policy-intro>span{display:block;margin-top:22px;color:var(--muted);font-size:12px}
+.policy-content section{margin-top:31px;scroll-margin-top:24px}
+.policy-content h2{font-size:21px;letter-spacing:-.4px;margin-bottom:12px;line-height:1.3}
+.policy-content p,.policy-content li{font-size:15px;line-height:1.85;color:var(--muted);overflow-wrap:anywhere}
+.policy-content p+p{margin-top:12px}
+.policy-content ul{margin:0 0 14px;padding-left:21px}
+.policy-content li+li{margin-top:10px}
+.policy-content strong{color:var(--ink);font-weight:650}
+.policy-content a,.signin-policies a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.policy-footer{border-top:1px solid var(--line);font-size:12px;color:var(--muted);padding-bottom:32px}
+.policy-footer nav,.results-footer nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.policy-footer a,.results-footer nav>a{display:inline-flex;align-items:center;min-height:36px}
+.policy-footer a:hover,.results-footer nav>a:hover{color:var(--accent)}
+.signin-content>.signin-policies{font-size:12px;line-height:1.7;max-width:320px}
+@media(max-width:600px){.policy-header,.policy-footer{padding:18px 21px;gap:16px}.policy-header .brand>span{font-size:25px}.policy-header .brand svg{width:34px;height:34px}.policy-header>.text-link{font-size:12px}.policy-main{padding:36px 23px 44px}.policy-intro>p:not(.eyebrow){font-size:16px}.policy-content p,.policy-content li{font-size:15px}.policy-footer{align-items:flex-start;flex-direction:column}.policy-footer nav{gap:20px}.results-footer{flex-wrap:wrap;gap:8px}.results-footer nav{gap:13px}}
 :root{--ink:#302b35;--muted:#776e78;--accent:#ce405a;--accent-dark:#af2e48;--signal:#ff8495;--tint:#fff0f3;--surface:#fffaf7;--line:#f0e6e4;font-family:'Figtree',system-ui,sans-serif;color:var(--ink);background:var(--surface);font-synthesis:none;font-size:14px}
 *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}button,a{touch-action:manipulation}button{cursor:pointer;color:inherit;border:0;background:none}button:disabled{opacity:.45;cursor:not-allowed}a{color:inherit;text-decoration:none}img{display:block;max-width:100%}p,h1,h2,h3,h4{margin:0}input,select,textarea{min-width:0;color:var(--ink)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--signal);outline-offset:3px}button:hover:not(:disabled){color:var(--accent)}button,a,select{transition:background .18s,color .18s,border-color .18s,box-shadow .18s}::selection{background:#ffd8df;color:var(--ink)}
 .browse-shell{height:100dvh;min-height:720px;display:flex;flex-direction:column}.site-header,.intro,.search-toolbar,.category-toolbar{flex-shrink:0}
