@@ -4,6 +4,12 @@ Use **Cloudflare Workers Free + D1 Free** for the app and rental data, and **Sup
 
 Do not activate Cloudflare R2, Zero Trust checkout, a paid Workers plan, Supabase Pro, paid branches, or paid add-ons for this pilot. The local photo emulator does not need an R2 subscription.
 
+## Current test deployment
+
+As of November 12, 2026, [Malapit](https://malapit-test.malapit-ph.workers.dev/) is deployed. Google Auth Platform shows External / In production, with the live homepage, privacy and terms links saved. The owner's actual Google login and explicit reviewer UUID are verified. An owner photo upload loaded successfully, was blocked for a signed-out visitor, and was removed afterward; no test listing was published. The privacy and terms routes return HTTP 200.
+
+A fresh second-account submission/review workflow and installation on a physical Android phone still need manual testing. Local lifecycle checks cover listing approval and ownership rules; they do not replace these remaining live checks.
+
 ## 1. Prepare Cloudflare
 
 ```sh
