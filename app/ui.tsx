@@ -16,6 +16,6 @@ export function Modal({ title, children, onClose, wide = false, className = "" }
 export function Empty({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
   return <div className="empty-state"><span className="empty-icon"><MapPin size={30} strokeWidth={1.4} /></span><h3>{title}</h3><p>{description}</p>{action}</div>;
 }
-export function SignIn({ onClose }: { onClose: () => void }) {
-  return <Modal title="Sign in to Malapit" onClose={onClose}><div className="signin-content"><Logo /><p>Sign in to save homes, message owners, and list your place.</p><a className="button primary" href={`/auth/signin?return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/")}`} target="_top">Continue to sign in<ArrowUpRight size={18} /></a><span>Your testing account keeps your homes and conversations together.</span></div></Modal>;
+export function SignIn({ onClose, ready = false, local = false }: { onClose: () => void; ready?: boolean; local?: boolean }) {
+  return <Modal title="Sign in to Malapit" onClose={onClose}><div className="signin-content"><Logo /><p>Sign in to save homes, message owners, and list your place.</p>{ready ? <a className="button primary" href={`/auth/signin?return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/")}`} target="_top">{local ? "Continue with test account" : "Continue with Google"}<ArrowUpRight size={18} /></a> : <p role="status">Sign-in will be available soon. You can browse the map while we finish setup.</p>}<span>Browsing and basic listings are free.</span></div></Modal>;
 }

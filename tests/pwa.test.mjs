@@ -27,7 +27,7 @@ test('a sign-in redirect or unrelated HTML is never cached as offline help',asyn
   for(const response of [new Response('<html>Sign in</html>',{headers:{'Content-Type':'text/html'}}),Response.redirect('https://login.test/',302)]){const app=worker(async()=>response);await assert.rejects(app.lifecycle('install'));assert.equal(app.stores.size,0)}
 });
 test('private API traffic, auth routes, writes, and external pages bypass the worker',async()=>{
-  const app=worker();for(const path of ['/api/data','/api/inquiries','/auth/signin','/auth/signout','/cdn-cgi/access/logout','https://other.test/'])assert.equal(await app.request(path),null);
+  const app=worker();for(const path of ['/api/data','/api/inquiries','/auth/signin','/auth/callback?code=test','/auth/signout','/cdn-cgi/access/logout','https://other.test/'])assert.equal(await app.request(path),null);
   assert.equal(await app.request('/',{method:'POST'}),null);assert.equal(await app.request('/',{mode:'cors'}),null);
 });
 test('online account HTML and access errors are returned directly and never cached',async()=>{

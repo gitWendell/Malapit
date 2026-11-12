@@ -1,10 +1,11 @@
 declare namespace Cloudflare {
   interface Env {
     DB?: D1Database;
-    BUCKET?: R2Bucket;
+    LOCAL_PHOTOS?: R2Bucket;
     AUTH_MODE?: string;
-    ACCESS_TEAM_DOMAIN?: string;
-    ACCESS_AUD?: string;
-    ADMIN_EMAILS?: string;
+    SUPABASE_URL?: string;
+    SUPABASE_PUBLISHABLE_KEY?: string;
+    SUPABASE_SECRET_KEY?: string;
+    ADMIN_USER_IDS?: string;
   }
 }

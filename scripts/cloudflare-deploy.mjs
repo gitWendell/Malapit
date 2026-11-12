@@ -6,11 +6,12 @@ configureToolEnvironment(process.cwd());
 const command = process.argv[2];
 if (!["check", "migrate", "deploy"].includes(command)) throw new Error("Expected check, migrate, or deploy.");
 const config = JSON.parse(readFileSync("wrangler.jsonc", "utf8"));
-if (config.vars?.AUTH_MODE !== "access") throw new Error("Standalone deployment requires Cloudflare Access authentication.");
+if (config.vars?.AUTH_MODE !== "supabase") throw new Error("Standalone deployment requires Supabase authentication.");
 if (!config.d1_databases?.some(db => db.binding === "DB" && /^[a-f0-9-]{36}$/.test(db.database_id) && !db.database_id.startsWith("00000000-"))) {
   throw new Error("Create the Cloudflare D1 database and put its database_id in wrangler.jsonc first.");
 }
-if (!config.r2_buckets?.some(bucket => bucket.binding === "BUCKET" && bucket.bucket_name)) throw new Error("Configure the BUCKET R2 binding first.");
+if (config.r2_buckets?.length) throw new Error("The free pilot must not deploy an R2 binding. Photos use Supabase Free.");
+if (config.vars?.ADMIN_USER_IDS?.includes("local_seedy")) throw new Error("Do not deploy a fictional local administrator.");
 function run(args) {
   const result = spawnSync(process.execPath, args, { stdio: "inherit" });
   if (result.error) throw result.error;
@@ -23,4 +24,4 @@ if (command === "deploy") {
   run([wrangler, "d1", "migrations", "apply", "DB", "--remote", "--config", "wrangler.jsonc"]);
   run([wrangler, "deploy", "--config", "dist/server/wrangler.json"]);
 }
-if (command === "check") console.log("Resource configuration is ready. Cloudflare login, R2 activation, Access policy, and runtime secrets must also be configured before inviting testers.");
+if (command === "check") console.log("Source configuration is ready: Supabase mode, D1, and no R2 binding. Confirm both providers remain on Free plans, configure Supabase Google sign-in/private storage and Worker secrets, then verify the deployed app before inviting testers.");

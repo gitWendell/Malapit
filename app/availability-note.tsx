@@ -6,7 +6,7 @@ import type { Listing } from "../lib/types";
 export default function AvailabilityNote({ home, now, compact = false }: { home: Listing; now: number; compact?: boolean }) {
   const value = getAvailability(home.confirmedAt, now);
   const label = home.isDemo ? `Sample confirmation: ${value.relative}`
-    : home.status !== "published" ? ({ pending: "Awaiting review", paused: "Listing paused", rented: "Marked as rented", changes_requested: "Listing needs changes" }[home.status])
+    : home.status !== "published" ? ({ pending: "Awaiting review", paused: "Listing paused", rented: "Marked as rented", withdrawn: "Listing withdrawn", changes_requested: "Listing needs changes" }[home.status])
     : value.state === "unknown" ? "Availability not confirmed"
     : value.state === "expired" ? "Availability confirmation overdue"
     : `Availability confirmed ${value.relative}`;

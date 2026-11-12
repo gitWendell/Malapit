@@ -35,6 +35,7 @@ export default defineConfig(async ({ command }) => {
         config: {
           ...(command === "serve"
             ? {
+                r2_buckets: [{ binding: "LOCAL_PHOTOS", bucket_name: "malapit-dev-photos" }],
                 services: [
                   {
                     binding: "CONNECTORS",

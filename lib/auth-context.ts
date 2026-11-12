@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { AuthIdentity } from "./access-auth";
+import type { AuthIdentity } from "./auth";
 
 const identity = new AsyncLocalStorage<AuthIdentity | null>();
 

@@ -1,3 +1,3 @@
 # Copy to .dev.vars for loopback development only. Never deploy this mode.
 AUTH_MODE="local"
-ADMIN_EMAILS="local_seedy@sites.test"
+ADMIN_USER_IDS="local_seedy"

@@ -25,7 +25,7 @@ async function request(path, user, method = "GET", body, origin = base) {
   if (body && !(body instanceof FormData)) headers["Content-Type"] = "application/json";
   const res = await fetch(base + path, { method, headers, ...(body ? { body: body instanceof FormData ? body : JSON.stringify(body) } : {}) });
   const text = await res.text(); let data; try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 200) }; }
-  return { status: res.status, data };
+  return { status: res.status, data, headers: res.headers };
 }
 function localSql(sql) {
   execFileSync(process.execPath, ["--import", "./scripts/sites-env.mjs", "./node_modules/wrangler/bin/wrangler.js", "d1", "execute", "DB", "--local", "--config", "dist/server/wrangler.json", "--persist-to", ".wrangler/state", "--command", sql], { cwd: new URL("..", import.meta.url), stdio: "pipe" });
@@ -35,18 +35,26 @@ try {
   expect(await request("/api/saved", null, "POST", { listingId: "demo-1", saved: true }), 401, "Anonymous writes rejected");
   expect(await request("/api/saved", renter, "POST", { listingId: "demo-1", saved: true }, "https://untrusted.invalid"), 403, "Cross-origin writes rejected");
   const adminState = await request("/api/data", admin); expect(adminState, 200, "Administrator session"); assert.equal(adminState.data.session.isAdmin, true);
+  assert(adminState.data.pilot.usage); assert.equal(adminState.data.pilot.signInProvider, "local"); assert.equal((await request("/api/data", null)).data.pilot.usage, undefined); checks++;
   expect(await request("/api/listings", owner, "POST", {}), 400, "Incomplete listing rejected");
   const badPhoto = new FormData(); badPhoto.set("file", new Blob(["not an image"], { type: "image/jpeg" }), "fake.jpg");
   expect(await request("/api/media", owner, "POST", badPhoto), 400, "Disguised image rejected");
   const upload = new FormData(); upload.set("file", new Blob([await readFile(new URL("../public/homes/home-1.jpg", import.meta.url))], { type: "image/jpeg" }), "qa-home.jpg");
   const photo = await request("/api/media", owner, "POST", upload); expect(photo, 201, "Photo upload persisted"); mediaIds.push(photo.data.url.split("/").at(-1));
+  expect(await request(photo.data.url, null), 404, "Unattached photos are private");
+  const ownedPhoto = await request(photo.data.url, owner); expect(ownedPhoto, 200, "Owner can read their photo"); assert.match(ownedPhoto.headers.get("cache-control"), /no-store/);
+  expect(await request(photo.data.url, outsider, "DELETE"), 403, "Other owners cannot delete photos");
   const input = { title: "QA lifecycle test apartment", city: "Makati", neighborhood: "Test neighborhood", address: "Private test building, private street, Makati", lat: 14.554321, lng: 121.024678, type: "Apartment", price: 12000, priceBasis: "entire unit", bedrooms: 1, bathrooms: 1, area: 28, description: "A fictional property created only for the local authorization and listing lifecycle smoke test.", photos: [photo.data.url], amenities: ["Own meter", "Kitchen"], deposit: 24000, advance: 12000, monthlyFees: 0, utilities: "Separate utility bills, test data only.", minLease: 6, availableFrom: "2026-12-01", role: "Direct owner", exactLocation: false, authorityConfirmed: true };
   const created = await request("/api/listings", owner, "POST", input); expect(created, 201, "Owner submission saved"); listingId = created.data.id;
   const pending = await request("/api/data", owner); assert(pending.data.myListings.some(p => p.id === listingId && p.status === "pending")); assert(!pending.data.listings.some(p => p.id === listingId)); checks++;
+  expect(await request(photo.data.url, outsider), 404, "Pending listing photos are private");
+  expect(await request(photo.data.url, admin), 200, "Reviewer can see pending photos");
+  expect(await request(photo.data.url, owner, "DELETE"), 409, "Referenced photos cannot be deleted");
   expect(await request(`/api/listings/${listingId}`, outsider, "PATCH", { action: "confirm" }), 403, "Other owners cannot modify listings");
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "approve" }), 403, "Owners cannot approve themselves");
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "confirm" }), 409, "Pending listings cannot be confirmed into search");
   expect(await request(`/api/listings/${listingId}`, admin, "PATCH", { action: "approve" }), 200, "Admin approval succeeds");
+  expect(await request(photo.data.url, null), 200, "Published listing photos are public");
   const publicData = await request("/api/data", null); const visible = publicData.data.listings.find(p => p.id === listingId); assert(visible); assert(!visible.address.includes("Private")); assert.notEqual(visible.lat, input.lat); assert.notEqual(visible.lng, input.lng); checks++;
   const privateData = await request("/api/data", owner); assert.equal(privateData.data.myListings.find(p => p.id === listingId).address, input.address); checks++;
   expect(await request("/api/saved", renter, "POST", { listingId, saved: true }), 200, "Saving a property succeeds");
@@ -56,6 +64,7 @@ try {
   assert.match(listingId, /^[a-f0-9-]{36}$/);
   localSql(`UPDATE listings SET confirmed_at = '${staleDate}' WHERE id = '${listingId}';`);
   assert(!(await request("/api/data", renter)).data.listings.some(p => p.id === listingId)); checks++;
+  expect(await request(photo.data.url, null), 404, "Expired listing photos are private again");
   const staleOwn = (await request("/api/data", owner)).data.myListings.find(p => p.id === listingId);
   assert.equal(staleOwn.confirmedAt, staleDate); assert.equal(staleOwn.status, "published"); checks++;
   expect(await request("/api/inquiries", renter, "POST", inquiry), 404, "Expired confirmations block new inquiries");
@@ -74,6 +83,7 @@ try {
   expect(await request("/api/reports", renter, "PATCH", { id: flag.id }), 403, "Only admin can resolve reports");
   expect(await request("/api/reports", admin, "PATCH", { id: flag.id }), 200, "Admin report resolution saved");
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "pause" }), 200, "Owner can pause listing");
+  expect(await request(photo.data.url, null), 404, "Paused listing photos are private");
   assert(!(await request("/api/data", null)).data.listings.some(p => p.id === listingId)); checks++;
   expect(await request("/api/inquiries", renter, "POST", inquiry), 404, "Paused listings cannot receive new inquiries");
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "confirm" }), 409, "Confirmation cannot reactivate a paused listing");
@@ -84,11 +94,25 @@ try {
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "rent" }), 200, "Owner can mark rented");
   assert(!(await request("/api/data", null)).data.listings.some(p => p.id === listingId)); checks++;
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "confirm" }), 409, "Confirmation cannot reactivate a rented listing");
-  console.log(`PASS: ${checks} checks covering authentication, authorization, upload validation, listing review, location privacy, saves, inquiries, replies, reports, availability expiry, owner reconfirmation, and listing state changes.`);
+  expect(await request(`/api/listings/${listingId}`, outsider, "PATCH", { action: "withdraw" }), 403, "Other owners cannot withdraw listings");
+  expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "withdraw" }), 200, "Owner can withdraw a listing");
+  expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "resubmit" }), 200, "Withdrawn listing can return to review");
+  expect(await request(`/api/listings/${listingId}`, admin, "PATCH", { action: "withdraw" }), 200, "Reviewer can release a pilot place");
+  assert.equal((await request("/api/data", owner)).data.myListings.find(home => home.id === listingId).status, "withdrawn"); checks++;
+  console.log(`PASS: ${checks} checks covering authentication, authorization, private photos, uploads, listing review, location privacy, saves, inquiries, replies, reports, availability, and listing states.`);
 } finally {
   const sql = [];
   if (listingId && /^[a-f0-9-]{36}$/.test(listingId)) for (const table of ["inquiries", "saved_homes", "reports"]) sql.push(`DELETE FROM ${table} WHERE listing_id = '${listingId}'`);
   if (listingId && /^[a-f0-9-]{36}$/.test(listingId)) sql.push(`DELETE FROM listings WHERE id = '${listingId}'`);
-  for (const id of mediaIds) if (/^[a-f0-9-]{36}$/.test(id)) sql.push(`DELETE FROM media WHERE id = '${id}'`);
-  if (sql.length) { execFileSync(process.execPath, ["--import", "./scripts/sites-env.mjs", "./node_modules/wrangler/bin/wrangler.js", "d1", "execute", "DB", "--local", "--config", "dist/server/wrangler.json", "--persist-to", ".wrangler/state", "--command", sql.join("; ") + ";"], { cwd: new URL("..", import.meta.url), stdio: "pipe" }); console.log("Removed this run's temporary local database records."); }
+  for (const user of [owner, renter, outsider]) {
+    assert.match(user.id, /^qa-(owner|renter|other)-[a-f0-9]{8}$/);
+    sql.push(`DELETE FROM saved_homes WHERE user_id = '${user.id}'`);
+    sql.push(`DELETE FROM upload_usage WHERE owner_id = '${user.id}'`);
+  }
+  if (sql.length) localSql(sql.join("; ") + ";");
+  for (const id of mediaIds) if (/^[a-f0-9-]{36}$/.test(id)) {
+    expect(await request(`/api/media/${id}`, owner, "DELETE"), 200, "Unused test photo removed from storage");
+    expect(await request(`/api/media/${id}`, owner), 404, "Deleted test photo is unavailable");
+  }
+  console.log("Removed this run's temporary local records and uploaded photos.");
 }

@@ -1,6 +1,6 @@
 export const PROPERTY_TYPES = ["All homes", "Apartment", "Condo", "House", "Room", "Bedspace"] as const;
 export const AMENITIES = ["Wi-Fi", "Air conditioning", "Pet friendly", "Parking", "Own meter", "Kitchen", "Furnished", "Laundry", "Visitors allowed", "No curfew"];
-export type ListingStatus = "pending" | "published" | "paused" | "rented" | "changes_requested";
+export type ListingStatus = "pending" | "published" | "paused" | "rented" | "changes_requested" | "withdrawn";
 export type Listing = {
   id: string; ownerId: string; ownerName: string; title: string; city: string; neighborhood: string; address: string; lat: number; lng: number;
   type: string; price: number; priceBasis: string; bedrooms: number; bathrooms: number; area: number; description: string;
@@ -11,7 +11,7 @@ export type Listing = {
 export type Session = { userId: string; displayName: string; email: string; isAdmin: boolean } | null;
 export type Inquiry = { id: string; listingId: string; listingTitle: string; ownerId: string; renterId: string; renterName: string; renterEmail: string; message: string; moveIn: string; occupants: number; reply: string; isDemo: number; createdAt: string };
 export type Report = { id: string; listingId: string; userId: string; reason: string; status: string; createdAt: string };
-export type AppData = { session: Session; listings: Listing[]; myListings: Listing[]; reviewListings: Listing[]; savedIds: string[]; inquiries: Inquiry[]; reports: Report[] };
+export type AppData = { session: Session; listings: Listing[]; myListings: Listing[]; reviewListings: Listing[]; savedIds: string[]; inquiries: Inquiry[]; reports: Report[]; pilot?: import("./pilot-limits").PilotStatus };
 export const money = (amount: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 }).format(amount);
 export const shortMoney = (amount: number) => amount >= 1000 ? `₱${Number((amount / 1000).toFixed(1))}k` : money(amount);
 export function distanceKm(a: [number, number], b: [number, number]) {

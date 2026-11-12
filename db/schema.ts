@@ -14,5 +14,6 @@ export const inquiries = sqliteTable("inquiries", {
   isDemo: integer("is_demo").notNull().default(0), createdAt: text("created_at").notNull(),
 });
 export const reports = sqliteTable("reports", { id: text("id").primaryKey(), listingId: text("listing_id").notNull(), userId: text("user_id").notNull(), reason: text("reason").notNull(), status: text("status").notNull().default("open"), createdAt: text("created_at").notNull() });
-export const media = sqliteTable("media", { id: text("id").primaryKey(), ownerId: text("owner_id").notNull(), contentType: text("content_type").notNull(), createdAt: text("created_at").notNull() });
+export const media = sqliteTable("media", { id: text("id").primaryKey(), ownerId: text("owner_id").notNull(), contentType: text("content_type").notNull(), createdAt: text("created_at").notNull(), byteSize: integer("byte_size").notNull().default(0), state: text("state").notNull().default("ready") });
+export const uploadUsage = sqliteTable("upload_usage", { ownerId: text("owner_id").notNull(), day: text("day").notNull(), attempts: integer("attempts").notNull().default(0) }, table => [primaryKey({ columns: [table.ownerId, table.day] })]);
 export const settings = sqliteTable("settings", { key: text("key").primaryKey(), value: text("value").notNull() });

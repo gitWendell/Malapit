@@ -318,3 +318,5 @@
  .owner-availability>p{font-size:11px}
  .map-selected-home>div>.availability-note{font-size:9px}
 }
+
+.pilot-summary{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:24px;padding:22px 24px;border:1px solid var(--line);border-radius:20px;background:#fff8f2}.pilot-summary h2{font-size:19px;margin:8px 0}.pilot-summary p{font-size:13px;line-height:1.7;color:var(--muted);max-width:430px}.pilot-summary>.eyebrow{margin:0}@media(max-width:650px){.pilot-summary{align-items:flex-start;flex-direction:column;gap:10px;padding:18px}}

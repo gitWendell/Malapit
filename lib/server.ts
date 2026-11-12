@@ -27,6 +27,16 @@ export async function findVisibleListing(id: string, userId?: string) {
 }
 export function routeError(error: unknown) {
   if (error instanceof HttpError) return Response.json({ error: error.message }, { status: error.status });
+  const messages: string[] = [];
+  for (let cause = error, depth = 0; cause && depth < 5; depth++) {
+    if (!(cause instanceof Error)) break;
+    messages.push(cause.message); cause = cause.cause;
+  }
+  const details = messages.join(" ");
+  if (details.includes("PILOT_PROPERTIES_FULL")) return Response.json({ error: "The 30-property pilot is full. Please try again when a place opens." }, { status: 409 });
+  if (details.includes("PILOT_STORAGE_FULL")) return Response.json({ error: "Photo uploads are paused because the pilot storage is full. Please contact Malapit." }, { status: 409 });
+  if (details.includes("PILOT_UPLOAD_LIMIT")) return Response.json({ error: "You have reached the pilot limit of 10 photo uploads today. Please try again tomorrow." }, { status: 429 });
+  if (details.includes("PILOT_PHOTO_REFERENCE")) return Response.json({ error: "Please use up to five of your own successfully uploaded photos." }, { status: 400 });
   if (error && typeof error === "object" && "issues" in error) { const issue = (error as { issues: { path: string[]; message: string }[] }).issues[0]; return Response.json({ error: `${issue.path.join(" ")}: ${issue.message}` }, { status: 400 }); }
   if (error instanceof SyntaxError) return Response.json({ error: "Please send a valid request." }, { status: 400 });
   console.error("Malapit request failed", error instanceof Error ? error.message : "Unknown error"); return Response.json({ error: "Something went wrong. Please try again." }, { status: 500 });

@@ -6,7 +6,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     checkOrigin(request); const user = await requireUser(), db = getDb(), { id } = await context.params;
     const [row] = await db.select().from(listings).where(eq(listings.id, id)); if (!row) throw new HttpError(404, "Listing not found.");
     const body = actionInput.parse(await request.json());
-    if (["approve", "reject"].includes(body.action)) {
+    if (body.action === "withdraw") {
+      if (!user.isAdmin && row.ownerId !== user.userId) throw new HttpError(403, "You can only withdraw your own listings.");
+      await db.update(listings).set({ status: "withdrawn" }).where(eq(listings.id, id));
+    } else if (["approve", "reject"].includes(body.action)) {
       if (!user.isAdmin) throw new HttpError(403, "Only the reviewer can approve listings.");
       if (row.status !== "pending") throw new HttpError(409, "This listing is no longer waiting for review.");
       await db.update(listings).set({ status: body.action === "approve" ? "published" : "changes_requested", reviewNote: body.action === "reject" ? String(body.reason || "Please check your property details and resubmit.").slice(0, 500) : "" }).where(eq(listings.id, id));

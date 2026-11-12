@@ -6,24 +6,35 @@ import { listingInput } from "../lib/validation";
 import { api, today } from "../lib/client";
 import { Modal } from "./ui";
 import RentalMap from "./rental-map";
+import { PILOT_LIMITS, type PilotStatus } from "../lib/pilot-limits";
+import { preparePropertyPhoto } from "../lib/photo-upload";
 
 type Draft = { title: string; type: string; price: number; priceBasis: string; bedrooms: number; bathrooms: number; area: number; city: string; neighborhood: string; address: string; lat: number; lng: number; exactLocation: boolean; description: string; photos: string[]; amenities: string[]; deposit: number; advance: number; monthlyFees: number; utilities: string; minLease: number; availableFrom: string; role: string; authorityConfirmed: boolean };
 const fresh: Draft = { title: "", type: "Apartment", price: 0, priceBasis: "entire unit", bedrooms: 1, bathrooms: 1, area: 0, city: "Makati", neighborhood: "", address: "", lat: 0, lng: 0, exactLocation: false, description: "", photos: [], amenities: [], deposit: 0, advance: 0, monthlyFees: 0, utilities: "Electricity and water billed separately.", minLease: 6, availableFrom: "", role: "Direct owner", authorityConfirmed: false };
 const steps = ["The basics", "Location", "Photos & details", "Costs & terms"];
 
-export default function ListingForm({ edit, onClose, onSubmitted }: { edit?: Listing; onClose: () => void; onSubmitted: () => Promise<void> }) {
+export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edit?: Listing; pilot?: PilotStatus; onClose: () => void; onSubmitted: () => Promise<void> }) {
   const [draft, setDraft] = useState<Draft>(edit ? { ...edit, authorityConfirmed: false } : { ...fresh, availableFrom: today() });
   const [step, setStep] = useState(0), [error, setError] = useState(""), [busy, setBusy] = useState(false), [uploading, setUploading] = useState(false);
   const form = useRef<HTMLFormElement>(null);
+  const newPhotos = useRef(new Set<string>());
   const update = (key: keyof Draft, value: unknown) => setDraft(p => ({ ...p, [key]: value }));
   const field = (key: keyof Draft, label: string, type = "text", min?: number) => <label className="field"><span>{label}</span><input name={key} aria-label={label} type={type} min={min} max={type === "number" ? 3000000 : undefined} step={type === "number" ? "any" : undefined} required value={draft[key] as string | number} onChange={e => update(key, type === "number" ? Number(e.target.value) : e.target.value)} /></label>;
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.currentTarget, files = Array.from(input.files || []);
-    if (files.length + draft.photos.length > 6) { setError("Add up to 6 photos."); return; }
+    if (files.length + draft.photos.length > PILOT_LIMITS.photosPerProperty) { setError("Add up to 5 photos."); input.value = ""; return; }
     setUploading(true); setError("");
-    try { for (const file of files) { if (file.size > 5 * 1024 * 1024) throw new Error("Each photo must be smaller than 5 MB."); const body = new FormData(); body.set("file", file); const result = await api<{ url: string }>("/api/media", body); setDraft(p => ({ ...p, photos: [...p.photos, result.url] })); } }
+    try { for (const file of files) { const prepared = await preparePropertyPhoto(file); const body = new FormData(); body.set("file", prepared); const result = await api<{ url: string }>("/api/media", body); newPhotos.current.add(result.url); setDraft(p => ({ ...p, photos: [...p.photos, result.url] })); } }
     catch (e) { setError(e instanceof Error ? e.message : "Photo upload failed."); }
     finally { setUploading(false); input.value = ""; }
+  }
+  async function removePhoto(url: string) {
+    setUploading(true); setError("");
+    try {
+      if (newPhotos.current.has(url)) { await api(url, undefined, "DELETE"); newPhotos.current.delete(url); }
+      setDraft(current => ({ ...current, photos: current.photos.filter(photo => photo !== url) }));
+    } catch (error) { setError(error instanceof Error ? error.message : "This photo could not be removed yet."); }
+    finally { setUploading(false); }
   }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
@@ -33,12 +44,24 @@ export default function ListingForm({ edit, onClose, onSubmitted }: { edit?: Lis
     const result = listingInput.safeParse(draft);
     if (!result.success) { const issue = result.error.issues[0]; setError(`${issue.path.join(" ")}: ${issue.message}`); return; }
     setBusy(true);
-    try { if (edit) await api(`/api/listings/${edit.id}`, { action: "update", data: result.data }, "PATCH"); else await api("/api/listings", result.data); await onSubmitted(); }
+    try {
+      if (edit) await api(`/api/listings/${edit.id}`, { action: "update", data: result.data }, "PATCH"); else await api("/api/listings", result.data);
+      newPhotos.current.clear();
+      for (const previous of edit?.photos ?? []) if (!result.data.photos.includes(previous)) await api(previous, undefined, "DELETE").catch(() => {});
+      await onSubmitted();
+    }
     catch (e) { setError(e instanceof Error ? e.message : "Please try again."); }
     finally { setBusy(false); }
   }
-  function close() { if (busy || uploading) return; if (!draft.title || window.confirm("Leave this listing without submitting it?")) onClose(); }
+  async function close() {
+    if (busy || uploading) return;
+    if ((draft.title || newPhotos.current.size) && !window.confirm("Leave this listing without submitting it?")) return;
+    setBusy(true);
+    await Promise.all([...newPhotos.current].map(photo => api(photo, undefined, "DELETE").catch(() => {})));
+    onClose();
+  }
   const city = CITIES.find(c => c.name === draft.city) || CITIES[0];
+  if (!edit && pilot && !pilot.submissionOpen) return <Modal title="The pilot is full" onClose={onClose}><div className="signin-content"><p>All 30 property places are taken for now. Please check back when a place opens.</p><button className="button primary" onClick={onClose}>Back to browsing</button></div></Modal>;
   return <Modal title={edit ? "Edit your listing" : "Create a rental listing"} onClose={close} wide className="listing-modal">
     <div className="listing-form-layout"><aside className="form-sidebar"><p className="eyebrow">LIST YOUR PLACE</p><h3>Put your rental<br />on the map.</h3><p>Add the location, photos, price, and lease terms.</p><ol className="form-steps">{steps.map((s, i) => <li className={step === i ? "current" : step > i ? "complete" : ""} key={s}><span>{step > i ? <Check size={14} /> : i + 1}</span>{s}</li>)}</ol><div className="free-note"><ShieldCheck size={21} /><div><strong>Your basic listing is free.</strong><p>New and edited listings are reviewed before appearing in search.</p></div></div></aside>
     <form ref={form} onSubmit={submit} className="listing-form"><div className="form-section-header"><span>STEP {step + 1} OF 4</span><h3>{steps[step]}</h3><p>{["Add your property type, size, and amenities.", "Set the address and place the pin on the map.", "Upload clear photos of the rental.", "Set the rent, move-in costs, and lease terms."][step]}</p></div>
@@ -59,7 +82,8 @@ export default function ListingForm({ edit, onClose, onSubmitted }: { edit?: Lis
         <label className="check-row full"><input type="checkbox" checked={draft.exactLocation} onChange={e => update("exactLocation", e.target.checked)} /><span>Show the exact location publicly<small>When unchecked, renters see an approximate pin and neighborhood.</small></span></label>
       </div>}
       {step === 2 && <div className="form-grid">
-        <div className="field full"><span>Property photos · {draft.photos.length}/6</span><div className="upload-grid">{draft.photos.map((photo, i) => <div className="upload-photo" key={photo}><img src={photo} alt={`Property photo ${i + 1}`} /><button type="button" aria-label={`Remove photo ${i + 1}`} onClick={() => update("photos", draft.photos.filter(p => p !== photo))}><X size={14} /></button></div>)}{draft.photos.length < 6 && <label className="upload-target">{uploading ? <LoaderCircle className="spin" /> : <ImagePlus />}<span>{uploading ? "Uploading…" : "Add photos"}</span><input aria-label="Upload property photos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading} onChange={upload} /></label>}</div><small>Use your own current photos. JPEG, PNG, or WebP, up to 5 MB each.</small></div>
+        <div className="field full"><span>Property photos · {draft.photos.length}/5</span><div className="upload-grid">{draft.photos.map((photo, i) => <div className="upload-photo" key={photo}><img src={photo} alt={`Property photo ${i + 1}`} /><button type="button" aria-label={`Remove photo ${i + 1}`} disabled={uploading || busy} onClick={() => void removePhoto(photo)}><X size={14} /></button></div>)}{draft.photos.length < PILOT_LIMITS.photosPerProperty && <label className="upload-target">{uploading ? <LoaderCircle className="spin" /> : <ImagePlus />}<span>{uploading ? "Uploading…" : "Add photos"}</span><input aria-label="Upload property photos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading || pilot?.photosReady === false} onChange={upload} /></label>}</div><small>Add up to five of your own current photos. JPEG, PNG, or WebP originals up to 12 MB are resized automatically. The pilot allows 10 uploads per person each day.</small></div>
+        {pilot?.photosReady === false && <p className="form-help full" role="status">Photo uploads are being prepared. Please come back later to finish your listing.</p>}
         <label className="field full"><span>About your place</span><textarea required minLength={30} maxLength={5000} rows={5} placeholder="Describe the space, nearby essentials, house rules, and what renters should know." value={draft.description} onChange={e => update("description", e.target.value)} /></label>
         <div className="field full"><span>What does your place offer?</span><div className="amenity-options">{AMENITIES.map(a => <button className={draft.amenities.includes(a) ? "selected" : ""} type="button" key={a} onClick={() => update("amenities", draft.amenities.includes(a) ? draft.amenities.filter(v => v !== a) : [...draft.amenities, a])}>{draft.amenities.includes(a) && <Check size={13} />}{a}</button>)}</div></div>
       </div>}
