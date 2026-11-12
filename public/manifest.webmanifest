@@ -1,0 +1,24 @@
+{
+  "id": "/",
+  "name": "Malapit — Rentals in the Philippines",
+  "short_name": "Malapit",
+  "description": "Find your next rental on the map. Compare homes, save your favorites, and contact the lister.",
+  "lang": "en-PH",
+  "start_url": "/?source=homescreen",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#fffaf7",
+  "theme_color": "#fffaf7",
+  "prefer_related_applications": false,
+  "categories": ["lifestyle", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Browse rentals", "url": "/", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Saved homes", "url": "/?view=saved", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

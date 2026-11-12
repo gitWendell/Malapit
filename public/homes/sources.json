@@ -1,0 +1,46 @@
+{
+  "license": "https://unsplash.com/license",
+  "purpose": "Fictional demo listing photography",
+  "images": [
+    {
+      "file": "home-1.jpg",
+      "bytes": 189851,
+      "source": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1100&q=82"
+    },
+    {
+      "file": "home-2.jpg",
+      "bytes": 138427,
+      "source": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1100&q=82"
+    },
+    {
+      "file": "home-3.jpg",
+      "bytes": 190528,
+      "source": "https://images.unsplash.com/photo-1600047509782-20d39509f26d?auto=format&fit=crop&w=1100&q=82"
+    },
+    {
+      "file": "home-4.jpg",
+      "bytes": 148154,
+      "source": "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1100&q=82"
+    },
+    {
+      "file": "home-5.jpg",
+      "bytes": 126597,
+      "source": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1100&q=82"
+    },
+    {
+      "file": "home-6.jpg",
+      "bytes": 168775,
+      "source": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1100&q=82"
+    },
+    {
+      "file": "home-7.jpg",
+      "bytes": 107376,
+      "source": "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1100&q=82"
+    },
+    {
+      "file": "home-8.jpg",
+      "bytes": 136226,
+      "source": "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1100&q=82"
+    }
+  ]
+}
