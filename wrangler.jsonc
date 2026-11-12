@@ -6,6 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "preview_urls": false,
+  "assets": { "html_handling": "none" },
   "vars": { "AUTH_MODE": "access" },
   "d1_databases": [{
     "binding": "DB",
