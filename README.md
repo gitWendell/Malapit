@@ -62,6 +62,8 @@ The smoke test is restricted to the built loopback Worker on port 5188. It check
 
 ## Project files
 
+The proposed [rental-management process](docs/rental-management-process-v1.md) covers connecting existing tenants, monthly bills, owner-confirmed payment records and repair requests. It is a design plan; these features and rent collection are not enabled in the live app yet.
+
 - `app/`, `components/`, `lib/`: interface, shared rules, and server routes.
 - `db/`, `drizzle/`: D1 schema and append-only migrations.
 - `worker/`, `wrangler.jsonc`: Cloudflare entry point and bindings.
