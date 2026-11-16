@@ -15,6 +15,13 @@
       "when": 1794454597731,
       "tag": "0001_uneven_captain_midlands",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794817889452,
+      "tag": "0002_supreme_scarlet_spider",
+      "breakpoints": true
     }
   ]
 }

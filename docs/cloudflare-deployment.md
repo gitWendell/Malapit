@@ -10,6 +10,8 @@ As of November 12, 2026, [Malapit](https://malapit-test.malapit-ph.workers.dev/)
 
 A fresh second-account submission/review workflow and installation on a physical Android phone still need manual testing. Local lifecycle checks cover listing approval and ownership rules; they do not replace these remaining live checks.
 
+The November 16 My Rentals release adds private units and owner–renter connections to the same app. It uses the existing D1 database and Supabase Auth, with no new subscription, photo bucket, payment provider or notification service. Apply `0002_supreme_scarlet_spider.sql` before publishing its Worker. The migration adds three private-rental tables and atomic state/limit/history triggers; it does not copy public listings into private records.
+
 ## 1. Prepare Cloudflare
 
 ```sh
@@ -82,6 +84,8 @@ For multiple reviewers, use comma-separated UUIDs. The first visitor does not be
 - A second account can upload photos and submit a fictional property. Submission remains private until reviewed.
 - An unrelated account cannot open its pending photo URL or read its inquiries. After approval, published photos are visible publicly.
 - Confirm owner replies, approximate locations, availability expiry, pause, rent, withdrawal, and resubmission.
+- In My Rentals, add a private unit, check monthly rent and dates, and invite a renter’s Google sign-in email. The renter reviews and accepts in their own account; share the copyable link manually if needed. No invitation email is sent.
+- Check that an unrelated account cannot open the invitation or rental record. Close the connection and confirm that the original parties keep their own history while a replacement renter cannot see it. Listing reviewers have no private-rental access bypass.
 - Check the reviewer usage panel and provider dashboards. App counters do not measure the entire account's traffic or bill.
 - Withdraw test listings and remove unused uploads before inviting real owners. Built-in example homes remain clearly fictional.
 
@@ -99,6 +103,14 @@ Each external upload reserves capacity in D1 first. Failed uploads retain that r
 The reviewer can withdraw unsuitable listings to release property places. Withdrawal preserves the record and photos. There is no automatic retention job yet. To recover abandoned or failed uploads, inspect their D1 records and corresponding Storage objects, confirm they are unreferenced, remove the objects through Supabase Storage, and release the D1 reservations only after deletion is confirmed. Never delete `storage.objects` rows directly.
 
 These limits reduce storage use. They do not cap bandwidth or replace provider quotas. Heavy browsing can still exhaust the free transfer/request allowance, causing the test site to become unavailable. Keep both organizations/accounts on Free; do not upgrade automatically to keep a busy test online.
+
+## Private rental records
+
+My Rentals has separate database limits: 100 active units across the test, 30 per owner, and 30 invitations per owner per Philippine day. Archiving a vacant unit releases an active-unit place. An accepted connection or unexpired pending invitation prevents unit edits and archiving. A seven-day invitation must match the current email returned by Supabase Auth; accepted records are thereafter tied to the original renter’s account ID.
+
+Rental data is returned with private, no-store responses. No public route, listing review role, or guessable invite link grants access. There is no email/SMS delivery, payment collection, rent balance, lease signing or automatic deletion in this release.
+
+For a privacy request, verify the requester’s account and identify their owned units, connections and history in `rental_units`, `rental_connections` and `rental_events`. A shared connection can also contain another party’s information. Review the minimum data needed, explain any reason for retention, and provide a requester-scoped copy or approved removal/de-identification through the manual support process. There is no in-app support access or automatic deletion job. Do not use listing-review privileges as permission to inspect private rental data. Keep support exports and any database work outside the public repository.
 
 ## Provider limits
 

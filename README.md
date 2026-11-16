@@ -1,6 +1,6 @@
 # Malapit
 
-A map-based rental marketplace for the Philippines. Renters can browse nearby homes and compare prices. Owners can submit properties, place map pins, upload photos, and manage inquiries.
+A map-based rental marketplace for the Philippines. Renters can browse nearby homes and compare prices. Owners can submit properties, place map pins, upload photos, and manage inquiries. The same account also opens **My Rentals**, a private area for units and accepted owner–renter connections.
 
 [Open the Cloudflare test site](https://malapit-test.malapit-ph.workers.dev/). Public browsing and Google sign-up are enabled. The owner's reviewer access and a real private photo upload have been verified. Read the published [privacy notice](https://malapit-test.malapit-ph.workers.dev/privacy) and [terms of use](https://malapit-test.malapit-ph.workers.dev/terms). A fresh second-account workflow and installation on a physical Android phone still need manual testing.
 
@@ -15,8 +15,10 @@ This standalone test uses **Cloudflare Workers Free + D1 Free**, with **Supabase
 - Availability reminders and hiding listings after 14 days without confirmation.
 - Approximate-location redaction in the public API and private unpublished photos.
 - Phone navigation and Android home-screen installation as a web app.
+- Private units with monthly rent, due day and rental dates; seven-day invitations matched to the renter’s current verified sign-in email.
+- Owner and renter review, accept/decline, revoke and close connections, with fixed shared details and a dated history. Vacant units can be edited, archived and restored.
 
-The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. Payments, paid promotions, email/SMS notifications, and automated ownership verification are not implemented.
+The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. My Rentals invitations appear inside the app and have a copyable link; Malapit does not email them. Monthly bills, payment records, repairs, actual payments, paid promotions, email/SMS notifications, and automated ownership verification are not implemented.
 
 ## Free pilot setup
 
@@ -25,6 +27,8 @@ Follow [the deployment guide](docs/cloudflare-deployment.md) to configure Cloudf
 Production verifies Supabase session tokens and restricts sign-in to Google. Cookies are secure, HttpOnly, and private. Client identity headers do not authenticate deployed users. `ADMIN_USER_IDS` explicitly names reviewer UUIDs; the first visitor does not become an administrator.
 
 The pilot allows 30 managed properties, five photos per listing, 250 stored/reserved photos, 100 MiB reserved photo storage, and ten upload attempts per person per Philippine day. Photos are JPEG, at most 1600 pixels per side and 400 KiB each. Failed/uncertain uploads keep their storage reservation. These app limits do not cap bandwidth; free provider quotas can interrupt service.
+
+My Rentals separately allows 100 active private units across the test, 30 per owner, and 30 invitations per owner per Philippine day. Units are not public map listings. Listing reviewers have no extra access to private rental records. Accepted access is bound to the renter’s account ID, so a future user of the same email or a replacement renter cannot inherit past records.
 
 ## Run locally
 
@@ -40,6 +44,7 @@ npm run dev -- --port 5187
 Open `http://localhost:5187`. Local sign-in uses a fictional account and an emulated photo store, with no provider subscription. Local authentication works only in explicit local mode on loopback HTTP. Never deploy `AUTH_MODE=local`.
 
 Local state stays in ignored `.wrangler/` files, separate from remote data and photos.
+My Rentals in local mode includes Owner, Renter and Other user links for checking both sides of an invitation. These fictional account switches are absent from the deployed Supabase flow.
 
 ## Check the app
 
@@ -54,15 +59,16 @@ In a second terminal:
 
 ```sh
 node scripts/smoke-test.mjs
+node scripts/rentals-smoke-test.mjs
 ```
 
-The smoke test is restricted to the built loopback Worker on port 5188. It checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. It cleans up its own records and photos. Never retarget it to a deployed site.
+Both smoke tests are restricted to the built loopback Worker on port 5188. The original test checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. The rental test checks private unit ownership, intended-email invitations, concurrent responses, immutable shared details, expired/revoked invitations, past renter privacy, and archive/restore. Each removes its own temporary records. Never retarget them to a deployed site.
 
 `npm start` uses a separate ignored local config and fictional identities. `npm run deploy` builds and deploys the production configuration. GitHub Actions runs TypeScript checks, automated tests, and a production build; deployment requires the provider setup in the guide.
 
 ## Project files
 
-The proposed [rental-management process](docs/rental-management-process-v1.md) covers connecting existing tenants, monthly bills, owner-confirmed payment records and repair requests. It is a design plan; these features and rent collection are not enabled in the live app yet.
+The [rental-management process](docs/rental-management-process-v1.md) describes the full plan. Its first step, private units and accepted owner–renter connections, is implemented in this release. Monthly bills, owner-confirmed payment records, repairs and rent collection remain future work.
 
 - `app/`, `components/`, `lib/`: interface, shared rules, and server routes.
 - `db/`, `drizzle/`: D1 schema and append-only migrations.

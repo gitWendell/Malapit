@@ -1,12 +1,23 @@
-# Malapit rental management — proposed process
+# Malapit rental management — process and release scope
 
-Prepared November 16, 2026. This is the next product plan, following the owner's request to manage rent and property concerns alongside rental discovery. The live app still provides discovery, listings and inquiries. This document and its fictional dashboard preview do not enable payments, send invitations or change live tenant records.
+Prepared November 16, 2026, following the owner's request to manage rent and property concerns alongside rental discovery. **My Rentals is part of the same Malapit app and account.** This release implements private units, rent and date details, intended-email invitations, acceptance/decline, revocation, closed connections and retained history. The monthly bills, payment records, repairs and payment collection described below are later stages. The separate fictional dashboard preview remains a demonstration, not live tenant data.
+
+## Current release
+
+- Owners can add private units and invite an existing renter using that renter’s Malapit Google sign-in email. Invitations appear inside My Rentals; the owner may copy and share a link. No email is sent.
+- Only the current verified account matching an unexpired invitation can respond. Invitations expire after seven days. Only one pending or accepted connection is allowed per unit.
+- Shared rent, address and dates are fixed on the connection. Revoke a pending invitation or close an accepted connection before editing the vacant unit and sending a new invitation.
+- Accepted and closed records stay bound to the original account IDs. A new renter or future holder of an old email cannot see the earlier record. Listing reviewer access does not grant private rental access.
+- Closing a Malapit connection preserves history; it does not terminate a lease. The app neither signs an agreement nor collects money.
+- The free test allows 100 active private units in total, 30 per owner, and 30 invitations per owner per Philippine day. Public listing limits remain separate.
+
+The first version supports one owner/manager account and one renter account per connection. Shared tenancy participants, deposits, advances and utilities are not recorded as separate financial items yet. Start with the connection, then add monthly bills before recording payments.
 
 ## Purpose and first scope
 
 Help owners manage existing rentals and help renters keep track of their own rent and concerns. Owners may add an existing tenant even when that person found the property elsewhere. Map listings and private rental-management records are separate: adding a unit or tenant does not publish a listing.
 
-The first management release should include units, accepted owner–renter connections, agreed rent and due dates, monthly bills, manual payment records, owner confirmation, an activity history and repair requests. Reminders are visible inside the app. Email, SMS, push notifications, money collection, automatic deductions, electronic signatures and paid management plans require later work.
+The planned management workflow includes units, accepted owner–renter connections, agreed rent and due dates, monthly bills, manual payment records, owner confirmation, an activity history and repair requests. Only the connection foundation is included in the current release. Future reminders will be visible inside the app first. Email, SMS, push notifications, money collection, automatic deductions, electronic signatures and paid management plans require later work.
 
 ## People and access
 
@@ -106,13 +117,13 @@ Measure bills acknowledged, time spent checking payments, unresolved corrections
 - Repair creation and updates appear to the correct parties; reopening retains earlier updates.
 - Phone layouts work for renter and owner. In-app reminders describe their actual delivery; SMS/email/push are not implied.
 - Private-proof and issue-photo storage, retention, account deletion, access/export requests and costs have an operating process. Financial documents must not use the current public-listing photo access rules unchanged.
-- Update the public privacy notice and terms to match the new data and services, and obtain the operator's approval before publishing those changes.
+- Keep the public privacy notice and terms matched to the data and services actually provided. The owner has authorized the current connection feature and publication of the app; obtain a new decision before adding financial services, paid terms or a new use of personal information.
 
 ## Preview and implementation handoff
 
 The separate clickable preview uses fictional accounts, one sample property, November 2026 bills, manual payment submissions and repair tickets. Owner and renter views share the example state so confirmation and issue updates can be followed. It does not call the live app, move money, upload real evidence or send messages.
 
-After reviewing this process and preview, implement accepted tenancy records and permissions first, then bills, payment submissions/confirmation and repairs. Add gateway collection only after the provider and business arrangements are approved. The existing map and listings remain a separate discovery feature throughout.
+Accepted rental records and permissions are now implemented. Next, build monthly bills, then payment submissions/confirmation and repairs. Add gateway collection only after the provider and business arrangements are approved. The existing map and listings remain the public discovery area of the same app throughout.
 
 ## Sources checked November 16, 2026
 

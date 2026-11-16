@@ -1,0 +1,158 @@
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Archive, ArrowRight, CalendarDays, Check, Copy, House, KeyRound, LoaderCircle, Mail, Pencil, Plus, RefreshCw, ShieldCheck, Users } from "lucide-react";
+import type { Session } from "../lib/types";
+import { api, today } from "../lib/client";
+import { effectiveRentalStatus, pesoInputToCents, rentalDate, rentalMoney, rentalStatusLabel, rentalUnitInput, type RentalConnection, type RentalEvent, type RentalsData, type RentalUnit } from "../lib/rentals";
+import { Empty, Modal } from "./ui";
+
+type UnitTerms = Omit<RentalUnit, "id" | "ownerId" | "createdAt" | "updatedAt" | "archivedAt">;
+type Detail = { connection: RentalConnection; events: RentalEvent[] };
+type Dialog = { kind: "unit"; unit?: RentalUnit } | { kind: "invite"; unit: RentalUnit } | { kind: "connection"; detail: Detail };
+const message = (error: unknown) => error instanceof Error ? error.message : "Please try again.";
+
+export default function MyRentals({ session, local, onSignIn, notify }: { session: Session; local: boolean; onSignIn: () => void; notify: (text: string, error?: boolean) => void }) {
+  const [data, setData] = useState<RentalsData | null>(null), [loadedFor, setLoadedFor] = useState(""), [error, setError] = useState("");
+  const [tab, setTab] = useState<"units" | "renting">("units"), [archived, setArchived] = useState(false), [busy, setBusy] = useState(false), [dialog, setDialog] = useState<Dialog | null>(null);
+  const sequence = useRef(0), detailSequence = useRef(0), id = session?.userId;
+  const refresh = useCallback(async () => {
+    const request = ++sequence.current;
+    const result = await api<RentalsData>("/api/rentals", undefined, "GET");
+    if (request === sequence.current) { setData(result); setLoadedFor(id || ""); setError(""); }
+    return result;
+  }, [id]);
+  const showConnection = useCallback(async (connectionId: string) => {
+    const request = ++detailSequence.current;
+    setBusy(true);
+    try { const detail = await api<Detail>("/api/rentals/connections/" + connectionId, undefined, "GET"); if (request === detailSequence.current) setDialog({ kind: "connection", detail }); }
+    catch (cause) { if (request === detailSequence.current) notify(message(cause), true); }
+    finally { if (request === detailSequence.current) setBusy(false); }
+  }, [notify]);
+  useEffect(() => {
+    let cancelled = false;
+    setData(null); setLoadedFor(""); setDialog(null); setError(""); setBusy(false);
+    if (id) refresh().then(result => {
+      if (cancelled) return;
+      const invitationId = new URLSearchParams(window.location.search).get("invite");
+      if (invitationId) { setTab("renting"); void showConnection(invitationId); }
+      else if (!result.units.length && result.myConnections.length) setTab("renting");
+    }).catch(cause => { if (!cancelled) setError(message(cause)); });
+    return () => { cancelled = true; sequence.current++; detailSequence.current++; };
+  }, [id, refresh, showConnection]);
+  useEffect(() => {
+    if (!id) return;
+    const resume = () => { if (document.visibilityState === "visible") void refresh().catch(cause => setError(message(cause))); };
+    window.addEventListener("focus", resume);
+    return () => window.removeEventListener("focus", resume);
+  }, [id, refresh]);
+
+  async function mutate<T = { id: string }>(path: string, body: unknown, method: string, success: string): Promise<T> {
+    setBusy(true);
+    try { const result = await api<T>(path, body, method); try { await refresh(); } catch { setError("Your change was saved. Refresh My Rentals to see the latest records."); } notify(success); return result; }
+    finally { setBusy(false); }
+  }
+  async function unitAction(unit: RentalUnit, action: "archive" | "restore") {
+    try { await mutate("/api/rentals/units/" + unit.id, { action, version: unit.updatedAt }, "PATCH", action === "archive" ? "Unit archived." : "Unit restored."); }
+    catch (cause) { notify(message(cause), true); }
+  }
+  async function connectionAction(item: RentalConnection, action: "accept" | "decline" | "revoke" | "end") {
+    const body = action === "accept" ? { action, detailsConfirmed: true } : { action, confirmed: true };
+    await mutate("/api/rentals/connections/" + item.id, body, "PATCH", ({ accept: "You are connected to this rental.", decline: "Invitation declined.", revoke: "Invitation revoked.", end: "Connection closed. Its record stays in your history." })[action]);
+    await showConnection(item.id);
+  }
+
+  if (!session) return <main className="workspace rentals-workspace"><div className="workspace-title"><div><p className="eyebrow">Your private space</p><h1>My Rentals</h1><p>Keep your unit and agreed rental details together.</p></div></div><Empty title="A place for your rental" description="Sign in with your Malapit account to add a unit or review a renter invitation." action={<button className="button primary" onClick={onSignIn}>Sign in<ArrowRight size={16} /></button>} /></main>;
+  const current = loadedFor === id ? data : null;
+  const owned = current?.ownedConnections || [], mine = current?.myConnections || [];
+  const units = (current?.units || []).filter(unit => archived ? !!unit.archivedAt : !unit.archivedAt);
+  const active = owned.filter(item => effectiveRentalStatus(item) === "accepted"), waiting = owned.filter(item => effectiveRentalStatus(item) === "pending");
+  const incoming = mine.filter(item => effectiveRentalStatus(item) === "pending"), connected = mine.filter(item => effectiveRentalStatus(item) === "accepted"), past = mine.filter(item => !["pending", "accepted"].includes(effectiveRentalStatus(item)));
+  return <main className="workspace rentals-workspace">
+    <div className="workspace-title"><div><p className="eyebrow"><KeyRound size={15} />Your private space</p><h1>My Rentals</h1><p>Manage units and connect with the people renting them.</p></div><button className="button primary" disabled={busy} onClick={() => setDialog({ kind: "unit" })}><Plus size={17} />Add a unit</button></div>
+    {local && <aside className="rental-local-tools"><strong>Local test accounts</strong><a href="/auth/signin?return_to=/?view=rentals">Owner</a><a href="/auth/signin?test_as=renter&return_to=/?view=rentals">Renter</a><a href="/auth/signin?test_as=other&return_to=/?view=rentals">Other user</a><span>Renter email: local_renter@sites.test</span></aside>}
+    <div className="rental-toolbar"><div className="rental-tabs" role="group" aria-label="My Rentals view"><button className={tab === "units" ? "selected" : ""} aria-pressed={tab === "units"} onClick={() => setTab("units")}><House size={16} />My units{current && <span>{current.units.filter(unit => !unit.archivedAt).length}</span>}</button><button className={tab === "renting" ? "selected" : ""} aria-pressed={tab === "renting"} onClick={() => setTab("renting")}><Users size={16} />I’m renting{incoming.length > 0 && <span>{incoming.length} to check</span>}</button></div><button className="button secondary rental-refresh" disabled={busy} onClick={() => void refresh().catch(cause => setError(message(cause)))} aria-label="Refresh My Rentals"><RefreshCw size={16} /><span>Refresh</span></button></div>
+    {error && <div className="rental-load-error" role="alert"><p>{error}</p><button className="text-link" onClick={() => void refresh().catch(cause => setError(message(cause)))}>Try again</button>{error.includes("Sign in") && <button className="text-link" onClick={onSignIn}>Sign in again</button>}</div>}
+    {!current && !error ? <div className="loading-inline"><LoaderCircle className="spin" />Loading your rentals…</div> : current && tab === "units" ? <>
+      <div className="stat-grid rental-stats"><div><span>Active units</span><strong>{current.units.filter(unit => !unit.archivedAt).length}</strong></div><div><span>Connected rentals</span><strong>{active.length}</strong></div><div><span>Invitations to accept</span><strong>{waiting.length}</strong></div></div>
+      <div className="rental-section-heading"><h2>{archived ? "Archived units" : "Your units"}</h2><label className="rental-archive-toggle"><input type="checkbox" checked={archived} onChange={event => setArchived(event.target.checked)} />Show archived</label></div>
+      {units.length ? <div className="rental-unit-grid">{units.map(unit => {
+        const history = owned.filter(item => item.unitId === unit.id), live = history.find(item => ["pending", "accepted"].includes(effectiveRentalStatus(item)));
+        return <article className="rental-unit-card" key={unit.id}>
+          <div className="rental-unit-top"><span className="rental-house-icon"><House size={22} /></span><span className={"status rental-state-" + (unit.archivedAt ? "archived" : live ? effectiveRentalStatus(live) : "empty")}>{unit.archivedAt ? "Archived" : live ? rentalStatusLabel(effectiveRentalStatus(live)) : "Ready to connect"}</span></div>
+          <p className="rental-property-name">{unit.propertyName}</p><h3>{unit.unitName}</h3><p className="rental-unit-address">{unit.address}, {unit.city}</p><div className="rental-unit-rent"><strong>{rentalMoney(unit.monthlyRentCents)}</strong><span>/ month</span></div><p className="rental-unit-due"><CalendarDays size={14} />Rent due on day {unit.dueDay}</p>
+          {live && <div className="rental-connected-person"><Users size={16} /><span>{live.renterName || live.inviteEmail}<small>{effectiveRentalStatus(live) === "accepted" ? "Connected renter" : "Invited renter"}</small></span></div>}
+          <div className="rental-card-actions">{unit.archivedAt ? <button className="button secondary" disabled={busy} onClick={() => void unitAction(unit, "restore")}><RefreshCw size={14} />Restore</button> : live ? <button className="button primary" disabled={busy} onClick={() => void showConnection(live.id)}>{live.status === "accepted" ? "View rental" : "View invitation"}<ArrowRight size={14} /></button> : <><button className="button primary" disabled={busy} onClick={() => setDialog({ kind: "invite", unit })}><Mail size={14} />Invite renter</button><button className="button secondary" disabled={busy} onClick={() => setDialog({ kind: "unit", unit })}><Pencil size={14} />Edit</button><button className="rental-icon-action" disabled={busy} onClick={() => void unitAction(unit, "archive")} aria-label={"Archive " + unit.unitName}><Archive size={17} /></button></>}</div>
+          {history.length > 0 && <details className="rental-history"><summary>Connection history ({history.length})</summary>{history.map(item => <button key={item.id} disabled={busy} onClick={() => void showConnection(item.id)}><span>{item.renterName || item.inviteEmail}<small>{rentalDate(item.createdAt)}</small></span><span>{rentalStatusLabel(effectiveRentalStatus(item))}</span></button>)}</details>}
+        </article>;
+      })}</div> : <Empty title={archived ? "No archived units" : "Start with a place you manage"} description={archived ? "Units you archive will appear here." : "Add your unit or room, set the agreed rent, and invite an existing renter. Adding a private unit does not advertise it on the map."} action={!archived && <button className="button primary" onClick={() => setDialog({ kind: "unit" })}><Plus size={16} />Add your first unit</button>} />}
+    </> : current ? <>
+      {incoming.length > 0 && <section className="rental-incoming"><div className="rental-section-heading"><h2>Invitations to check</h2><span>{incoming.length}</span></div><div className="rental-unit-grid">{incoming.map(item => <ConnectionCard key={item.id} item={item} busy={busy} open={() => void showConnection(item.id)} />)}</div></section>}
+      <div className="rental-section-heading"><h2>Your connected rentals</h2></div>
+      {connected.length ? <div className="rental-unit-grid">{connected.map(item => <ConnectionCard key={item.id} item={item} busy={busy} open={() => void showConnection(item.id)} />)}</div> : <Empty title={incoming.length ? "Check the invitation above" : "Your rental connection starts here"} description={incoming.length ? "Review the owner, unit and rental details before accepting." : "Ask your owner to invite the email you use to sign in to Malapit. Their invitation will appear here."} />}
+      {past.length > 0 && <details className="rental-past"><summary>Past connections and responses ({past.length})</summary><div className="rental-unit-grid">{past.map(item => <ConnectionCard key={item.id} item={item} busy={busy} open={() => void showConnection(item.id)} />)}</div></details>}
+    </> : null}
+    <p className="rental-private-note"><ShieldCheck size={15} />Rental records are private to their owner and connected renter. Payments are arranged directly between you.</p>
+    {dialog && current && <Modal title={dialog.kind === "unit" ? dialog.unit ? "Edit unit" : "Add a private unit" : dialog.kind === "invite" ? "Invite your renter" : "Rental connection"} wide={dialog.kind === "unit"} className="rental-dialog" onClose={() => { if (!busy) setDialog(null); }}>
+      {dialog.kind === "unit" ? <UnitForm key={dialog.unit?.id || "new"} initial={dialog.unit} busy={busy} onSave={async terms => { if (dialog.unit) await mutate("/api/rentals/units/" + dialog.unit.id, { action: "update", version: dialog.unit.updatedAt, data: terms }, "PATCH", "Unit details updated."); else await mutate("/api/rentals/units", terms, "POST", "Your private unit is ready. You can invite your renter."); setDialog(null); }} /> : dialog.kind === "invite" ? <InviteForm unit={dialog.unit} email={session.email} busy={busy} onInvite={async email => { const result = await mutate<{ id: string }>("/api/rentals/invitations", { unitId: dialog.unit.id, unitVersion: dialog.unit.updatedAt, email, sharingConfirmed: true }, "POST", "Invitation ready. Share the link with your renter."); setDialog(null); await showConnection(result.id); }} /> : <ConnectionDetail key={dialog.detail.connection.id + dialog.detail.connection.status} detail={dialog.detail} session={session} busy={busy} onAction={action => connectionAction(dialog.detail.connection, action)} />}
+    </Modal>}
+  </main>;
+}
+
+function ConnectionCard({ item, busy, open }: { item: RentalConnection; busy: boolean; open: () => void }) {
+  const status = effectiveRentalStatus(item);
+  return <article className="rental-unit-card"><div className="rental-unit-top"><span className="rental-house-icon"><KeyRound size={22} /></span><span className={"status rental-state-" + status}>{rentalStatusLabel(status)}</span></div><p className="rental-property-name">{item.propertyName}</p><h3>{item.unitName}</h3><p className="rental-unit-address">{item.address}, {item.city}</p><div className="rental-unit-rent"><strong>{rentalMoney(item.monthlyRentCents)}</strong><span>/ month</span></div><p className="rental-unit-due"><Users size={14} />{item.ownerName}</p><div className="rental-card-actions"><button className="button primary" disabled={busy} onClick={open}>{status === "pending" ? "Review invitation" : "View rental details"}<ArrowRight size={15} /></button></div></article>;
+}
+
+function UnitForm({ initial, busy, onSave }: { initial?: RentalUnit; busy: boolean; onSave: (terms: UnitTerms & { requestId?: string }) => Promise<void> }) {
+  const [draft, setDraft] = useState({ propertyName: initial?.propertyName || "", unitName: initial?.unitName || "", city: initial?.city || "", address: initial?.address || "", monthlyRent: initial ? String(initial.monthlyRentCents / 100) : "", dueDay: String(initial?.dueDay || 1), leaseStart: initial?.leaseStart || today(), leaseEnd: initial?.leaseEnd || "" });
+  const [error, setError] = useState("");
+  const requestId = useRef(crypto.randomUUID());
+  const update = (key: keyof typeof draft, value: string) => setDraft(previous => ({ ...previous, [key]: value }));
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setError("");
+    const cents = pesoInputToCents(draft.monthlyRent);
+    if (cents === null) { setError("Enter the monthly rent with no more than two decimal places."); return; }
+    const parsed = rentalUnitInput.safeParse({ ...draft, monthlyRentCents: cents, dueDay: Number(draft.dueDay), leaseEnd: draft.leaseEnd || null });
+    if (!parsed.success) { setError(parsed.error.issues[0].message); return; }
+    try { await onSave({ ...parsed.data, requestId: requestId.current }); } catch (cause) { setError(message(cause)); }
+  }
+  return <form className="rental-form" onSubmit={submit}><p className="rental-form-intro">A private record for a place you manage. You can invite a renter after saving.</p><fieldset disabled={busy}><div className="form-grid">
+    <label className="field"><span>Property name</span><input value={draft.propertyName} onChange={event => update("propertyName", event.target.value)} required minLength={2} maxLength={100} placeholder="e.g. Sampaguita Apartments" /></label>
+    <label className="field"><span>Unit / room</span><input value={draft.unitName} onChange={event => update("unitName", event.target.value)} required maxLength={60} placeholder="e.g. Unit 2B" /></label>
+    <label className="field"><span>City or municipality</span><input value={draft.city} onChange={event => update("city", event.target.value)} required minLength={2} maxLength={80} placeholder="City or municipality" /></label>
+    <label className="field"><span>Monthly rent (₱)</span><input type="number" min={100} max={1000000} step=".01" value={draft.monthlyRent} onChange={event => update("monthlyRent", event.target.value)} required placeholder="e.g. 8000" /></label>
+    <label className="field full"><span>Unit address</span><input value={draft.address} onChange={event => update("address", event.target.value)} required minLength={8} maxLength={250} placeholder="Building, street and barangay" /></label>
+    <label className="field"><span>Rent due day</span><select value={draft.dueDay} onChange={event => update("dueDay", event.target.value)}>{Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>Day {index + 1} of each month</option>)}</select>{Number(draft.dueDay) > 28 && <small>In shorter months, use the last day of the month.</small>}</label>
+    <label className="field"><span>Rental start</span><input type="date" required min="1900-01-01" max="2200-12-31" value={draft.leaseStart} onChange={event => update("leaseStart", event.target.value)} /></label>
+    <label className="field"><span>Rental end (optional)</span><input type="date" min={draft.leaseStart} max="2200-12-31" value={draft.leaseEnd} onChange={event => update("leaseEnd", event.target.value)} /><small>Leave empty for an open-ended rental.</small></label>
+  </div><p className="form-help">Record the rent and dates agreed with your renter. Deposits, utilities and rent collection are separate.</p>{error && <p className="form-error" role="alert">{error}</p>}<div className="rental-form-actions"><button className="button primary" type="submit">{busy ? <LoaderCircle className="spin" size={17} /> : <Check size={17} />}{initial ? "Save unit" : "Add unit"}</button></div></fieldset></form>;
+}
+
+function RentalTerms({ item }: { item: Pick<RentalUnit, "propertyName" | "unitName" | "address" | "city" | "monthlyRentCents" | "dueDay" | "leaseStart" | "leaseEnd"> }) {
+  return <section className="rental-terms"><p className="rental-property-name">{item.propertyName}</p><h3>{item.unitName}</h3><p className="rental-unit-address">{item.address}, {item.city}</p><dl><div><dt>Monthly rent</dt><dd>{rentalMoney(item.monthlyRentCents)}</dd></div><div><dt>Rent due</dt><dd>Day {item.dueDay} each month{item.dueDay > 28 && <small>Last day in shorter months</small>}</dd></div><div><dt>Rental start</dt><dd>{rentalDate(item.leaseStart)}</dd></div><div><dt>Rental end</dt><dd>{item.leaseEnd ? rentalDate(item.leaseEnd) : "Open-ended"}</dd></div></dl></section>;
+}
+
+function InviteForm({ unit, email, busy, onInvite }: { unit: RentalUnit; email: string; busy: boolean; onInvite: (email: string) => Promise<void> }) {
+  const [renterEmail, setRenterEmail] = useState(""), [confirmed, setConfirmed] = useState(false), [error, setError] = useState("");
+  async function submit(event: React.FormEvent) { event.preventDefault(); setError(""); try { await onInvite(renterEmail.trim()); } catch (cause) { setError(message(cause)); } }
+  return <form className="rental-form" onSubmit={submit}><RentalTerms item={unit} /><fieldset disabled={busy}><label className="field"><span>Renter’s Malapit sign-in email</span><input type="email" autoComplete="off" required maxLength={254} value={renterEmail} onChange={event => setRenterEmail(event.target.value)} placeholder="Their Google account email" /></label><p className="form-help">The invitation will appear in their My Rentals area. You can also share its link. It expires after 7 days.</p><label className="check-row rental-consent"><input type="checkbox" required checked={confirmed} onChange={event => setConfirmed(event.target.checked)} /><span>I manage this unit and can share these details with the renter. My account name and email ({email}) will be visible to them.</span></label>{error && <p className="form-error" role="alert">{error}</p>}<div className="rental-form-actions"><button className="button primary" disabled={!confirmed} type="submit">{busy ? <LoaderCircle className="spin" size={17} /> : <Mail size={17} />}Create invitation</button></div></fieldset></form>;
+}
+
+function ConnectionDetail({ detail, session, busy, onAction }: { detail: Detail; session: NonNullable<Session>; busy: boolean; onAction: (action: "accept" | "decline" | "revoke" | "end") => Promise<void> }) {
+  const item = detail.connection, owner = item.ownerId === session.userId, status = effectiveRentalStatus(item);
+  const [checked, setChecked] = useState(false), [error, setError] = useState(""), [confirmAction, setConfirmAction] = useState<"revoke" | "end" | null>(null), [copied, setCopied] = useState(false);
+  const linkInput = useRef<HTMLInputElement>(null);
+  const link = typeof window === "undefined" ? "" : window.location.origin + "/?view=rentals&invite=" + item.id;
+  async function action(value: "accept" | "decline" | "revoke" | "end") { setError(""); try { await onAction(value); } catch (cause) { setError(message(cause)); } }
+  async function copy() { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { linkInput.current?.focus(); linkInput.current?.select(); setError("Select and copy the link above to share it."); } }
+  return <div className="rental-connection-detail"><div className="rental-detail-status"><span className={"status rental-state-" + status}>{rentalStatusLabel(status)}</span><span>{owner ? "Owner view" : "Renter view"}</span></div><RentalTerms item={item} />
+    <dl className="rental-people"><div><dt>Owner</dt><dd>{item.ownerName}<a href={"mailto:" + item.ownerEmail}>{item.ownerEmail}</a></dd></div><div><dt>{status === "pending" ? "Invited renter" : "Renter"}</dt><dd>{item.renterName || item.inviteEmail}{item.renterEmail && <span>{item.renterEmail}</span>}</dd></div></dl>
+    {status === "pending" && <p className="form-help">Invitation valid until {rentalDate(item.expiresAt)}. Check the owner, unit, rent and dates before accepting.</p>}
+    {status === "pending" && owner && <section className="rental-share"><label className="field"><span>Share this invitation link</span><input ref={linkInput} readOnly value={link} onFocus={event => event.target.select()} /></label><button className="button secondary" onClick={() => void copy()}><Copy size={15} />{copied ? "Copied" : "Copy link"}</button><p className="form-help">Only {item.inviteEmail} can open it after signing in. Share the link yourself; Malapit does not send an email.</p></section>}
+    {status === "pending" && !owner && <><label className="check-row rental-consent"><input type="checkbox" checked={checked} disabled={busy} onChange={event => setChecked(event.target.checked)} /><span>I checked these rental details. Accepting shares my account name and email ({session.email}) with the owner and connects this private record.</span></label><p className="form-help">Accepting or declining records your account name and email for the owner. This connection does not sign a lease or authorize payments.</p><div className="rental-form-actions"><button className="button secondary" disabled={busy} onClick={() => void action("decline")}>Decline invitation</button><button className="button primary" disabled={busy || !checked} onClick={() => void action("accept")}><Check size={16} />Accept connection</button></div></>}
+    {(status === "accepted" || status === "ended") && <p className="rental-record-note"><ShieldCheck size={17} />{status === "accepted" ? "You are connected through this private Malapit record. Your rental agreement and payments stay between you and the other party." : "This connection is closed. Its original record stays visible to the original owner and renter."}</p>}
+    {confirmAction ? <div className="rental-action-confirm"><strong>{confirmAction === "revoke" ? "Revoke this invitation?" : "Close this Malapit connection?"}</strong><p>{confirmAction === "revoke" ? "The renter will no longer be able to accept this link. You can prepare another invitation later." : "This closes the shared record in My Rentals. It does not terminate your rental agreement or remove the record from your history."}</p><div className="rental-form-actions"><button className="button secondary" disabled={busy} onClick={() => setConfirmAction(null)}>Keep it open</button><button className="button primary" disabled={busy} onClick={() => void action(confirmAction)}>{confirmAction === "revoke" ? "Revoke invitation" : "Close connection"}</button></div></div> : <div className="rental-detail-secondary">{status === "pending" && owner && <button className="text-button" disabled={busy} onClick={() => setConfirmAction("revoke")}>Revoke invitation</button>}{status === "accepted" && <button className="text-button" disabled={busy} onClick={() => setConfirmAction("end")}>Close connection</button>}</div>}
+    {error && <p className="form-error" role="alert">{error}</p>}
+    <section className="rental-activity"><h3>Record history</h3>{detail.events.map(event => <div key={event.id}><span>{({ invited: "Invitation prepared", accepted: "Renter accepted", declined: "Renter declined", revoked: "Invitation revoked", expired: "Invitation expired", ended: "Connection closed" } as Record<string, string>)[event.action] || event.action}<small>{event.actorName}</small></span><time dateTime={event.createdAt}>{rentalDate(event.createdAt)}</time></div>)}</section>
+  </div>;
+}

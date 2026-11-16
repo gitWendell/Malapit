@@ -31,10 +31,10 @@ const worker = {
       return auth.response(new Response(null, { status: 302, headers: {
         Location: location,
         "Cache-Control": "private, no-store",
-        ...(auth.local ? { "Set-Cookie": `__malapit_local_auth=${signOut ? "" : "1"}; Path=/; HttpOnly; SameSite=Lax${signOut ? "; Max-Age=0" : ""}` } : {}),
+        ...(auth.local ? { "Set-Cookie": `__malapit_local_auth=${signOut ? "" : ["renter", "other"].includes(url.searchParams.get("test_as") ?? "") ? url.searchParams.get("test_as") : "1"}; Path=/; HttpOnly; SameSite=Lax${signOut ? "; Max-Age=0" : ""}` } : {}),
       } }));
     }
-    const user = await auth.identity();
+    const user = await auth.identity(url.pathname === "/api/rentals" || url.pathname.startsWith("/api/rentals/"));
     let binding = ctx.props?.CONNECTORS;
     // Local preview emulates the same request-scoped capability. This branch and
     // the auxiliary service binding are absent from production builds.

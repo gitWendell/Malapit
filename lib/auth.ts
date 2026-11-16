@@ -1,5 +1,6 @@
 import { createServerClient, parseCookieHeader, serializeCookieHeader } from "@supabase/ssr";
 import { signInConfigured, supabaseOrigin, type SupabaseConfig } from "./supabase-config.ts";
+import { localTestAccount } from "./local-test-accounts.ts";
 
 export type AuthIdentity = { userId: string; displayName: string; email: string; isAdmin: boolean };
 export type AuthConfig = SupabaseConfig;
@@ -37,11 +38,12 @@ export function createRequestAuth(request: Request, config: AuthConfig, fetcher:
   return {
     ready,
     local,
-    async identity(): Promise<AuthIdentity | null> {
+    async identity(verifyWithAuthServer = false): Promise<AuthIdentity | null> {
       if (local) {
         const id = request.headers.get("oai-authenticated-user-id"), email = request.headers.get("oai-authenticated-user-email");
         if (id && email) return withRole(id, email, email.split("@")[0], config);
-        if (parseCookieHeader(request.headers.get("cookie") ?? "").some(cookie => cookie.name === "__malapit_local_auth" && cookie.value === "1")) return withRole("local_seedy", "local_seedy@sites.test", "Seedy", config);
+        const account = localTestAccount(parseCookieHeader(request.headers.get("cookie") ?? "").find(cookie => cookie.name === "__malapit_local_auth")?.value ?? "");
+        if (account) return withRole(account.userId, account.email, account.displayName, config);
         return null;
       }
       if (!client) return null;
@@ -54,6 +56,16 @@ export function createRequestAuth(request: Request, config: AuthConfig, fetcher:
         const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
         if (claims.iss !== `${supabaseOrigin(config)}/auth/v1` || !audiences.includes("authenticated") || claims.role !== "authenticated" || claims.is_anonymous || !/^[a-f0-9-]{36}$/i.test(claims.sub) || typeof claims.email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(claims.email)) return null;
         if (claims.app_metadata?.provider !== "google" && !claims.app_metadata?.providers?.includes("google")) return null;
+        // Private rental invitations depend on the current verified account
+        // email, not a profile field or a possibly stale email in a valid JWT.
+        if (verifyWithAuthServer) {
+          const { data: current, error: userError } = await client.auth.getUser();
+          const user = current.user;
+          if (userError || !user || user.id !== claims.sub || user.is_anonymous || !user.email_confirmed_at || typeof user.email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) return null;
+          if (user.app_metadata?.provider !== "google" && !(Array.isArray(user.app_metadata?.providers) && user.app_metadata.providers.includes("google"))) return null;
+          const currentName = user.user_metadata?.full_name;
+          return withRole(user.id, user.email, typeof currentName === "string" && currentName.trim() ? currentName.trim().slice(0, 120) : user.email.split("@")[0], config);
+        }
         const name = claims.user_metadata?.full_name;
         return withRole(claims.sub, claims.email, typeof name === "string" && name.trim() ? name.trim().slice(0, 120) : claims.email.split("@")[0], config);
       } catch { return null; }

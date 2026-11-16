@@ -75,3 +75,17 @@ test('identities are isolated across concurrent requests',async()=>{
 test('auth redirects reject external and reserved destinations',()=>{
   assert.equal(safeReturnPath('/?view=saved'),'/?view=saved');for(const value of [null,'//evil.test','/\\evil.test','https://evil.test','/auth/signout','/cdn-cgi/access/logout'])assert.equal(safeReturnPath(value),'/');
 });
+test('private rental identity uses the current verified Google account from the Auth server',async()=>{
+  const jwt=await token();
+  const user={id:renterId,email:'current@example.com',email_confirmed_at:new Date().toISOString(),app_metadata:{provider:'google'},user_metadata:{full_name:'Current Name'}};
+  const server=current=>async(input,init)=>String(input).endsWith('/user')?Response.json(current):fetcher(input,init);
+  const fresh=await createRequestAuth(request(jwt),config,server(user)).identity(true);
+  assert.equal(fresh.email,'current@example.com');assert.equal(fresh.userId,renterId);
+  for(const changed of [{...user,id:adminId},{...user,email_confirmed_at:null},{...user,app_metadata:{provider:'email'}},{...user,is_anonymous:true}])assert.equal(await createRequestAuth(request(jwt),config,server(changed)).identity(true),null);
+  assert.equal(await createRequestAuth(request(jwt),config,fetcher).identity(true),null);
+});
+test('multiple local browser fixtures stay limited to explicit loopback test mode',async()=>{
+  const local=createRequestAuth(new Request('http://127.0.0.1:5188/api/rentals',{headers:{cookie:'__malapit_local_auth=renter'}}),{AUTH_MODE:'local'});
+  assert.equal((await local.identity(true)).userId,'local_renter');
+  assert.equal(await createRequestAuth(request(null,{cookie:'__malapit_local_auth=renter'}),config,fetcher).identity(true),null);
+});

@@ -11,11 +11,12 @@ import OwnerAvailability from "./owner-availability";
 import InstallApp from "./install-app";
 import { isListingVisible, needsAvailabilityReminder } from "../lib/availability";
 import ListingForm from "./listing-form";
+import MyRentals from "./my-rentals";
 import { Empty, Logo, Modal, SignIn } from "./ui";
 import { PILOT_LIMITS } from "../lib/pilot-limits";
 
 const EMPTY_DATA: AppData = { session: null, listings: [], myListings: [], reviewListings: [], savedIds: [], inquiries: [], reports: [] };
-type Nav = "explore" | "saved" | "listings" | "inbox" | "review";
+type Nav = "explore" | "saved" | "listings" | "inbox" | "review" | "rentals";
 type Filters = { type: string; maxPrice: number; beds: number; amenities: string[]; moveIn: string };
 const DEFAULT_FILTERS: Filters = { type: "All homes", maxPrice: 1000000, beds: -1, amenities: [], moveIn: "" };
 const typeIcons = [LayoutGrid, Building2, Building2, House, DoorOpen, BedDouble];
@@ -58,6 +59,7 @@ export default function RentalApp() {
       if (params.get("auth") === "failed") { notify("We couldn't finish signing you in. Please try again.", true); params.delete("auth"); window.history.replaceState(null, "", window.location.pathname + (params.size ? `?${params}` : "")); }
       if (id) { const home = [...result.listings, ...result.myListings, ...DEMO_LISTINGS].find(p => p.id === id); if (home) setDetail(home); }
       if (result.session && params.get("new") === "1") setListingForm(true);
+      if (requestedNav === "rentals") setNav("rentals");
       if (result.session && ["saved", "listings", "inbox", "review"].includes(requestedNav || "")) setNav(requestedNav as Nav);
       if (result.session && requestedNav === "saved") { setQuery(""); setSearchText(""); setCenter([12.4, 122]); setZoom(6); }
     }).catch(e => setLoadError(e.message)).finally(() => setLoaded(true));
@@ -94,9 +96,12 @@ export default function RentalApp() {
   }
   function closeHome() { setDetail(null); const url = new URL(window.location.href); url.searchParams.delete("home"); window.history.replaceState(null, "", url); }
   function go(next: Nav) {
-    if (next !== "explore" && !data.session) { setPanel("signin"); return; }
+    if (next !== "explore" && !data.session) {
+      if (next === "rentals") { setNav("rentals"); setMobileMap(false); const url = new URL(window.location.href); url.searchParams.set("view", "rentals"); window.history.replaceState(null, "", url); }
+      setPanel("signin"); return;
+    }
     setNav(next); setMobileMap(false); setAccountMenu(false); setSelectedHomeId(""); setHovered(""); closeHome();
-    const url = new URL(window.location.href); if (next === "explore") url.searchParams.delete("view"); else url.searchParams.set("view", next); url.searchParams.delete("new"); window.history.replaceState(null, "", url);
+    const url = new URL(window.location.href); if (next === "explore") url.searchParams.delete("view"); else url.searchParams.set("view", next); url.searchParams.delete("new"); if (next !== "rentals") url.searchParams.delete("invite"); window.history.replaceState(null, "", url);
     if (next === "saved") { setQuery(""); setSearchText(""); setBounds(null); setFilters(DEFAULT_FILTERS); setCenter([12.4, 122]); setZoom(6); }
   }
   function search(value = searchText) {
@@ -121,8 +126,8 @@ export default function RentalApp() {
   function createListing() { setAccountMenu(false); if (!data.session) { setPanel("signin"); return; } setEditing(null); setListingForm(true); }
   const browse = nav === "explore" || nav === "saved";
   return <div className={`app-shell ${browse ? "browse-shell" : "workspace-shell"} ${browse && mobileMap ? "is-mobile-map" : ""}`}>
-    <header className="site-header"><button className="brand-link" aria-label="Malapit home" onClick={() => go("explore")}><Logo /></button><nav className="main-nav" aria-label="Main navigation"><button className={nav === "explore" ? "active" : ""} onClick={() => go("explore")}>Explore rentals</button><button className={nav === "saved" ? "active" : ""} onClick={() => go("saved")}>Saved homes{data.savedIds.length > 0 && <span className="nav-count">{data.savedIds.length}</span>}</button><button className={nav === "inbox" ? "active" : ""} onClick={() => go("inbox")}>Inquiries{data.inquiries.length > 0 && <span className="nav-count">{data.inquiries.length}</span>}</button></nav>
-      <div className="header-actions"><InstallApp /><button className="list-place-button" aria-label="List your place" onClick={createListing}><Plus size={17} /><span>List your place</span></button><div className="account-container"><button className="account-button" aria-label="Open account menu" aria-expanded={accountMenu} onClick={e => { e.stopPropagation(); if (data.session) setAccountMenu(p => !p); else setPanel("signin"); }}>{data.session ? <span>{data.session.displayName.slice(0, 1).toUpperCase()}</span> : <UserRound size={18} />}<ChevronDown size={12} /></button>{accountMenu && <div className="account-menu" onClick={e => e.stopPropagation()}><div className="account-identity"><strong>{data.session?.displayName}</strong><span>{data.session?.email}</span></div><button onClick={() => go("explore")}><Search size={16} />Explore rentals</button><button onClick={() => go("saved")}><Heart size={16} />Saved homes</button><button onClick={() => go("listings")}><House size={16} />My listings{reminders.length > 0 && <span className="nav-count">{reminders.length} to confirm</span>}</button><button onClick={() => go("inbox")}><MessageCircle size={16} />My inquiries</button>{data.session?.isAdmin && <button onClick={() => go("review")}><ShieldCheck size={16} />Review listings</button>}<button onClick={() => { setPanel("about"); setAccountMenu(false); }}><CircleHelp size={16} />How Malapit works</button><a href="/auth/signout?return_to=/" target="_top"><LogOut size={16} />Sign out</a></div>}</div></div>
+    <header className="site-header"><button className="brand-link" aria-label="Malapit home" onClick={() => go("explore")}><Logo /></button><nav className="main-nav" aria-label="Main navigation"><button className={nav === "explore" ? "active" : ""} onClick={() => go("explore")}>Explore rentals</button><button className={nav === "saved" ? "active" : ""} onClick={() => go("saved")}>Saved homes{data.savedIds.length > 0 && <span className="nav-count">{data.savedIds.length}</span>}</button><button className={nav === "inbox" ? "active" : ""} onClick={() => go("inbox")}>Inquiries{data.inquiries.length > 0 && <span className="nav-count">{data.inquiries.length}</span>}</button><button className={nav === "rentals" ? "active" : ""} onClick={() => go("rentals")}>My Rentals</button></nav>
+      <div className="header-actions"><InstallApp /><button className="list-place-button" aria-label="List your place" onClick={createListing}><Plus size={17} /><span>List your place</span></button><div className="account-container"><button className="account-button" aria-label="Open account menu" aria-expanded={accountMenu} onClick={e => { e.stopPropagation(); if (data.session) setAccountMenu(p => !p); else setPanel("signin"); }}>{data.session ? <span>{data.session.displayName.slice(0, 1).toUpperCase()}</span> : <UserRound size={18} />}<ChevronDown size={12} /></button>{accountMenu && <div className="account-menu" onClick={e => e.stopPropagation()}><div className="account-identity"><strong>{data.session?.displayName}</strong><span>{data.session?.email}</span></div><button onClick={() => go("explore")}><Search size={16} />Explore rentals</button><button onClick={() => go("saved")}><Heart size={16} />Saved homes</button><button onClick={() => go("rentals")}><House size={16} />My Rentals</button><button onClick={() => go("listings")}><House size={16} />My listings{reminders.length > 0 && <span className="nav-count">{reminders.length} to confirm</span>}</button><button onClick={() => go("inbox")}><MessageCircle size={16} />My inquiries</button>{data.session?.isAdmin && <button onClick={() => go("review")}><ShieldCheck size={16} />Review listings</button>}<button onClick={() => { setPanel("about"); setAccountMenu(false); }}><CircleHelp size={16} />How Malapit works</button><a href="/auth/signout?return_to=/" target="_top"><LogOut size={16} />Sign out</a></div>}</div></div>
     </header>
     {loaded && data.session && reminders.length > 0 && nav !== "listings" && <aside className="availability-reminder-banner" aria-label="Availability reminder">
       <Bell size={17} /><span><strong>{reminders.length} {reminders.length === 1 ? "rental needs" : "rentals need"} an availability check.</strong> Confirm what is still available.</span><button onClick={() => go("listings")}>Review listings<ArrowRight size={14} /></button>
@@ -148,7 +153,7 @@ export default function RentalApp() {
           <button className="icon-button" aria-label="Clear selected property" onClick={() => { setSelectedHomeId(""); setHovered(""); }}><X size={16} /></button>
         </aside> : <div className="map-caption"><span><MapPin size={20} /></span><div><strong>Find it on the map.</strong><p>Hover a listing to highlight its price. Select it to zoom in.</p></div></div>}
       </section></main>
-    </> : <main className="workspace"><div className="workspace-title"><div><p className="eyebrow">Your account</p><h1>{nav === "listings" ? "My listings" : nav === "review" ? "Listing review" : "Rental inquiries"}</h1><p>{nav === "listings" ? "Update your properties, prices, and availability." : nav === "review" ? "Review submissions, request corrections, and handle reports." : "Read rental inquiries and reply to renters."}</p></div>{nav === "listings" && <button className="button primary" onClick={createListing}><Plus size={17} />List a place</button>}</div>
+    </> : nav === "rentals" ? <MyRentals session={data.session} local={data.pilot?.signInProvider === "local"} onSignIn={() => setPanel("signin")} notify={notify} /> : <main className="workspace"><div className="workspace-title"><div><p className="eyebrow">Your account</p><h1>{nav === "listings" ? "My listings" : nav === "review" ? "Listing review" : "Rental inquiries"}</h1><p>{nav === "listings" ? "Update your properties, prices, and availability." : nav === "review" ? "Review submissions, request corrections, and handle reports." : "Read rental inquiries and reply to renters."}</p></div>{nav === "listings" && <button className="button primary" onClick={createListing}><Plus size={17} />List a place</button>}</div>
       {!loaded ? <div className="loading-inline"><LoaderCircle className="spin" />Loading your space…</div> : !data.session ? <Empty title="Make yourself at home" description="Sign in to manage your listings and conversations." action={<button className="button primary" onClick={() => setPanel("signin")}>Sign in</button>} /> : nav === "inbox" ? <Inbox data={data} refresh={async () => { await refresh(); }} notify={notify} /> : nav === "review" ? <Review data={data} busy={busy} action={listingAction} open={openHome} refresh={async () => { await refresh(); }} notify={notify} /> : <>
         <div className="stat-grid"><div><span>Your properties</span><strong>{data.myListings.length}</strong></div><div><span>Visible in search</span><strong>{data.myListings.filter(home => isListingVisible(home, now)).length}</strong></div><div><span>Awaiting review</span><strong>{data.myListings.filter(p => p.status === "pending").length}</strong></div></div>
         <section className={`availability-policy ${reminders.length ? "has-reminders" : ""}`} aria-label="Availability reminders">
@@ -174,7 +179,7 @@ export default function RentalApp() {
       <button className={browse && mobileMap ? "active" : ""} aria-current={browse && mobileMap ? "page" : undefined} onClick={() => { if (!browse) go("explore"); setMobileMap(true); }}><Map size={22} /><span>Map</span></button>
       <button className={nav === "saved" && !mobileMap ? "active" : ""} aria-current={nav === "saved" && !mobileMap ? "page" : undefined} onClick={() => { if (nav === "saved") setMobileMap(false); else go("saved"); }}><Heart size={22} /><span>Saved</span>{data.savedIds.length > 0 && <small>{data.savedIds.length}</small>}</button>
       <button className={nav === "inbox" ? "active" : ""} aria-current={nav === "inbox" ? "page" : undefined} onClick={() => go("inbox")}><MessageCircle size={22} /><span>Inquiries</span></button>
-      <button className={nav === "listings" ? "active" : ""} aria-current={nav === "listings" ? "page" : undefined} onClick={() => go("listings")}><House size={22} /><span>My listings</span>{reminders.length > 0 && <small>{reminders.length}</small>}</button>
+      <button className={nav === "rentals" ? "active" : ""} aria-current={nav === "rentals" ? "page" : undefined} onClick={() => go("rentals")}><House size={22} /><span>My Rentals</span></button>
     </nav>
     {toast && <div className={`toast ${toast.error ? "toast-error" : ""}`} role="status">{toast.error ? <Info size={18} /> : <CheckCircle2 size={18} />}<span>{toast.message}</span><button aria-label="Dismiss notification" onClick={() => setToast(null)}><X size={15} /></button></div>}
   </div>;
