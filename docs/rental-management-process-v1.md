@@ -1,6 +1,6 @@
 # Malapit rental management — process and release scope
 
-Prepared November 16 and updated November 17, 2026, following the owner's request to manage rent and property concerns alongside rental discovery. **My Rentals is part of the same Malapit app and account.** The current release implements private units, rent and date details, intended-email invitations, acceptance/decline, revocation, closed connections, monthly rent bills and retained correction history. Payment records, repairs and payment collection described below are later stages. The separate fictional dashboard preview remains a demonstration, not live tenant data.
+Prepared November 16 and updated November 17, 2026, following the owner's request to manage rent and property concerns alongside rental discovery. **My Rentals is part of the same Malapit app and account.** The current release implements private units, rent and date details, intended-email invitations, acceptance/decline, revocation, closed connections, monthly rent bills, owner-confirmed payment records and retained correction history. Repairs and payment collection described below are later stages. The separate fictional dashboard preview and the `/guide` video are demonstrations, not live tenant data.
 
 ## Current release
 
@@ -19,15 +19,25 @@ The first version supports one owner/manager account and one renter account per 
 - The billing month identifies the month in which the covered period starts. Default dates use the calendar month, clipped to the agreed rental dates. Owners can change the coverage for their agreed cycle, such as November 17–December 16, up to 31 days. A partial first/last month starts with an empty amount so the owner enters the agreed charge; no prorating rule is assumed.
 - The due date starts with the agreed due day, using the last day in shorter months, and can be reviewed and changed before sharing. Money is stored as integer cents. Only rent is recorded in this release.
 - One current bill is allowed per connection and billing month. Current covered periods cannot overlap, including across month boundaries. Concurrent/repeated requests cannot silently create duplicate bills.
-- Owner and renter see the same private bill, owner note and history. Monthly totals show **Rent billed**, excluding cancelled bills. They are not collections, profit or a confirmed unpaid balance. **Upcoming**, **Due today** and **Due date passed** describe dates only; the app does not yet know whether an external payment was received.
+- Owner and renter see the same private bill, owner note and history. Monthly totals show **Rent billed**, **Confirmed for these bills** and **Remaining in records**, excluding cancelled bills. Confirmed totals depend on the owner's checks and refer to the selected bills, not when money arrived. They are not profit or independent verification. Due-date counts apply only where a recorded balance remains.
 - The owner corrects a bill by cancelling it with a reason and creating a replacement while the connection remains open. Original details and both history events stay visible. Closing a connection stops new bills and preserves existing records for the original parties.
 - Bill history is paged by billing month in My Rentals. The connection shows its latest 12 bills; older records remain available through the month selector. Limits are 10,000 historical bills across the test and 60 creations per owner per Philippine day. Cancelling does not reset the limits.
+
+## Payment-record release — November 17
+
+- The renter reports a payment already made directly to the owner, with an amount, method, date, reference and optional note. Reference is required for GCash, Maya and bank transfers. There are no proof-image uploads or automatic transfers.
+- One **Awaiting confirmation** report per bill is allowed. It stays separate from confirmed amounts and does not reduce the balance. The owner checks original cash, bank or wallet records before confirming, or requests a correction with a reason. The renter may cancel their own pending report with a reason.
+- The owner can record money already received, including cash, with an explicit receipt check. Partial payments reduce the balance only after owner confirmation. The database rechecks the balance on every confirmation or owner receipt so concurrent actions cannot create an overpayment.
+- Only the owner may reverse a confirmed record, with a reason. The original amount, parties, dates, reference, confirmation and correction history stay visible. A reversal changes the recorded balance; it does not return money. A bill must have no pending or confirmed payments before cancellation for correction.
+- A reference already used on another confirmed record for this owner and payment method requires an owner explanation before confirmation. The cross-bill flag is visible only to the owner and does not declare fraud. The explanation is part of the shared payment record.
+- Limits are 20,000 historical payment entries across the test and 30 creations per person per Philippine day. Rejected, cancelled and reversed records still count. History is paged 20 entries at a time. Listing reviewers have no bypass; access stays with the bill's original owner and renter, including after a connection closes.
+- The public `/guide` page includes a 16-scene phone walkthrough with English narration, captions and a transcript. All demonstrated accounts, addresses and amounts are fictional and were created only in local development.
 
 ## Purpose and first scope
 
 Help owners manage existing rentals and help renters keep track of their own rent and concerns. Owners may add an existing tenant even when that person found the property elsewhere. Map listings and private rental-management records are separate: adding a unit or tenant does not publish a listing.
 
-The planned management workflow includes units, accepted owner–renter connections, agreed rent and due dates, monthly bills, manual payment records, owner confirmation, an activity history and repair requests. The connection foundation and monthly rent bills are included in the current release. Due-date reminders are visible inside the app. Email, SMS, push notifications, automatic monthly generation, money collection, automatic deductions, electronic signatures and paid management plans require later work.
+The management workflow includes units, accepted owner–renter connections, agreed rent and due dates, monthly bills, manual payment records, owner confirmation and an activity history. Repair requests are the next planned stage. Due-date reminders are visible inside the app. Email, SMS, push notifications, automatic monthly generation, money collection, automatic deductions, electronic signatures and paid management plans require later work.
 
 ## People and access
 
@@ -69,7 +79,7 @@ Pending or rejected submissions do not reduce this balance. An overdue label ide
 
 ## 4. Record a payment made directly to the owner
 
-1. The renter selects a bill and records the amount, method, date, reference and optional private proof. Cash can also be recorded by the owner after checking their own records.
+1. The renter selects a bill and records the amount, method, date, reference and optional note. Keep original receipts outside the app; optional private proof uploads are a later feature. Cash can also be recorded by the owner after checking their own records.
 2. The submission becomes **Awaiting confirmation**. Its amount is visible separately from confirmed payments. Screenshot upload alone never marks a bill paid.
 3. The owner checks their original bank, wallet or cash records, then confirms the payment or requests a correction with a reason. Each submission can be confirmed once. Both people see the actor, date and decision.
 4. A confirmed partial payment produces **Partly paid** and leaves the remaining amount due. Full confirmation produces **Paid**. Keep an overdue indication when a partial balance is past due.
@@ -122,7 +132,7 @@ Measure bills acknowledged, time spent checking payments, unresolved corrections
 
 - An owner can connect an existing tenant; only the intended account can accept. A declined, expired or revoked invitation grants no access.
 - Monthly generation cannot duplicate a bill. Short months, first/last periods, partial payments, advances and ended tenancies produce the agreed amounts.
-- A pending screenshot leaves confirmed collections unchanged. Confirmation updates both dashboards once; rejection requires a reason. Duplicate submissions, overpayments and corrections preserve history.
+- A pending payment report leaves confirmed totals unchanged. Confirmation updates both dashboards once; rejection requires a reason. Duplicate submissions, overpayments and corrections preserve history.
 - A renter cannot see another tenancy, and an unrelated owner or public visitor cannot read private records or proof. New tenants cannot inherit old records. Listing review does not silently grant financial access.
 - Repair creation and updates appear to the correct parties; reopening retains earlier updates.
 - Phone layouts work for renter and owner. In-app reminders describe their actual delivery; SMS/email/push are not implied.
@@ -133,7 +143,7 @@ Measure bills acknowledged, time spent checking payments, unresolved corrections
 
 The separate clickable preview uses fictional accounts, one sample property, November 2026 bills, manual payment submissions and repair tickets. Owner and renter views share the example state so confirmation and issue updates can be followed. It does not call the live app, move money, upload real evidence or send messages.
 
-Accepted rental records, permissions and monthly rent bills are implemented. Next, build payment submissions/confirmation, then repairs. Add gateway collection only after the provider and business arrangements are approved. The existing map and listings remain the public discovery area of the same app throughout.
+Accepted rental records, permissions, monthly rent bills and payment submissions/confirmation are implemented. Repair requests are next. Add gateway collection only after the provider and business arrangements are approved. The existing map and listings remain the public discovery area of the same app throughout.
 
 ## Sources checked November 16, 2026
 

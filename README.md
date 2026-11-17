@@ -18,8 +18,10 @@ This standalone test uses **Cloudflare Workers Free + D1 Free**, with **Supabase
 - Private units with monthly rent, due day and rental dates; seven-day invitations matched to the renter’s current verified sign-in email.
 - Owner and renter review, accept/decline, revoke and close connections, with fixed shared details and a dated history. Vacant units can be edited, archived and restored.
 - Monthly rent bills with explicit covered dates, exact peso amounts, due dates, private notes and correction history. Owner and renter see the same records, with monthly totals and due-date labels.
+- Renter payment reports, owner receipt confirmation, partial balances, cash records and dated corrections. Pending reports stay separate from confirmed amounts.
+- A phone-friendly [video and written guide](https://malapit-test.malapit-ph.workers.dev/guide), using fictional local demonstration data and English narration.
 
-The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. My Rentals invitations and bills appear inside the app; Malapit does not email them. Owners create each month's bill after checking its dates and amount. Payment records, repairs, actual payments, automatic bill generation, paid promotions, email/SMS notifications, and automated ownership verification are not implemented. Due-date labels do not establish whether an external payment has been received.
+The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. My Rentals invitations and bills appear inside the app; Malapit does not email them. Owners create each month's bill after checking its dates and amount. Owners check their own original records before confirming receipt. Malapit does not independently verify, collect, hold or transfer money. Repairs, payment-proof uploads, actual payment processing, automatic bill generation, paid promotions, email/SMS notifications, and automated ownership verification are not implemented.
 
 ## Free pilot setup
 
@@ -31,7 +33,9 @@ The pilot allows 30 managed properties, five photos per listing, 250 stored/rese
 
 My Rentals separately allows 100 active private units across the test, 30 per owner, and 30 invitations per owner per Philippine day. Units are not public map listings. Listing reviewers have no extra access to private rental records. Accepted access is bound to the renter’s account ID, so a future user of the same email or a replacement renter cannot inherit past records.
 
-Rent bills are limited to 10,000 historical records across the test and 60 creations per owner per Philippine day. Cancelled bills retain their history and still count toward these limits. The database prevents overlapping current covered periods and more than one current bill per connection and billing month. Corrections cancel and replace a bill, preserving the original amount and reason. Bills do not show collections, profit or a confirmed unpaid balance.
+Rent bills are limited to 10,000 historical records across the test and 60 creations per owner per Philippine day. Cancelled bills retain their history and still count toward these limits. The database prevents overlapping current covered periods and more than one current bill per connection and billing month. Corrections cancel and replace a bill, preserving the original amount and reason. Cancel a bill only after resolving pending reports and reversing confirmed records with a reason.
+
+Payment records are limited to 20,000 historical entries across the test and 30 creations per person per Philippine day. Cancelled, rejected and reversed entries still count. One pending report is allowed per bill. Database checks prevent confirmation or recording above the current balance and preserve the original amounts, parties, dates, references and action history. Only owner-confirmed records reduce a balance. Reversing a record changes the balance and preserves its history; it does not refund money. Monthly confirmed totals refer to the selected bills, not the date money was received, and are not profit.
 
 ## Run locally
 
@@ -64,20 +68,22 @@ In a second terminal:
 node scripts/smoke-test.mjs
 node scripts/rentals-smoke-test.mjs
 node scripts/rental-bills-smoke-test.mjs
+node scripts/rental-payments-smoke-test.mjs
 ```
 
-All three smoke tests are restricted to the built loopback Worker on port 5188. The original test checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. The rental test checks private unit ownership, intended-email invitations, concurrent responses, immutable shared details, expired/revoked invitations, past renter privacy, and archive/restore. The billing test checks scoped access, exact amounts, duplicate requests, overlapping dates, totals, concurrent cancellation and immutable correction history. Each removes its own temporary records. Never retarget them to a deployed site.
+All four smoke tests are restricted to the built loopback Worker on port 5188. The original test checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. The rental test checks private unit ownership, intended-email invitations, concurrent responses, immutable shared details, expired/revoked invitations, past renter privacy, and archive/restore. The billing test checks scoped access, exact amounts, duplicate requests, overlapping dates, totals, concurrent cancellation and immutable correction history. The payment test checks reports, partial balances, owner confirmation, account isolation, repeated references, reversals and concurrent actions. Each removes only its own temporary records. Never retarget them to a deployed site.
 
 `npm start` uses a separate ignored local config and fictional identities. `npm run deploy` builds and deploys the production configuration. GitHub Actions runs TypeScript checks, automated tests, and a production build; deployment requires the provider setup in the guide.
 
 ## Project files
 
-The [rental-management process](docs/rental-management-process-v1.md) describes the full plan. Private units, accepted owner–renter connections and monthly rent bills are implemented. Owner-confirmed payment records, repairs and rent collection remain future work.
+The [rental-management process](docs/rental-management-process-v1.md) describes the full plan. Private units, accepted owner–renter connections, monthly rent bills and owner-confirmed payment records are implemented. Repairs and rent collection remain future work.
 
 - `app/`, `components/`, `lib/`: interface, shared rules, and server routes.
 - `db/`, `drizzle/`: D1 schema and append-only migrations.
 - `worker/`, `wrangler.jsonc`: Cloudflare entry point and bindings.
 - `docs/`: business process, research, and deployment guide.
+- `public/tutorial/`: narrated MP4, captions, poster and transcript from fictional local app screens. `docs/walkthrough-scenes.json` is the script; `scripts/create-walkthrough.mjs` assembles CUA-captured screenshots on macOS using Swift/AppKit, the installed Samantha voice and FFmpeg. No external recording connection is required.
 
 Keep credentials in Cloudflare runtime secrets or ignored local environment files. Do not commit tokens, `.dev.vars`, database files, uploads, or build output. `.openai/hosting.json` has no original Site identity and is retained for the build integration.
 

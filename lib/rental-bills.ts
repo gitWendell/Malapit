@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isCivilDate, philippinesDay, type RentalConnection } from "./rentals.ts";
+import type { BillBalances, RentalPaymentRecord } from "./rental-payments.ts";
 
 export const RENTAL_BILL_LIMITS = { total: 10000, dailyPerOwner: 60, periodDays: 31 } as const;
 export const isBillingMonth = (value: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && isCivilDate(value + "-01");
@@ -25,10 +26,11 @@ export type RentalBill = {
   status: "issued" | "voided"; createdAt: string; createdDay: string;
   voidedAt: string | null; voidReason: string | null;
 };
-export type RentalBillSummary = RentalBill & { propertyName: string; unitName: string; ownerName: string; renterName: string | null };
+export type RentalBillWithBalance = RentalBill & BillBalances;
+export type RentalBillSummary = RentalBillWithBalance & { propertyName: string; unitName: string; ownerName: string; renterName: string | null };
 export type RentalBillEvent = { id: string; billId: string; actorId: string; actorName: string; action: string; reason: string; createdAt: string };
-export type RentalBillDetail = { bill: RentalBill; connection: RentalConnection; events: RentalBillEvent[]; currentBillId: string | null };
-export type RentalBillsPage = { bills: RentalBillSummary[]; hasMore: boolean; month: string; totals: { count: number; amountCents: number; past: number; today: number; upcoming: number } };
+export type RentalBillDetail = { bill: RentalBillWithBalance; connection: RentalConnection; events: RentalBillEvent[]; currentBillId: string | null; payments: RentalPaymentRecord[]; paymentPage: number; hasMorePayments: boolean };
+export type RentalBillsPage = { bills: RentalBillSummary[]; hasMore: boolean; month: string; totals: { count: number; amountCents: number; confirmedCents: number; remainingCents: number; pendingCents: number; pendingCount: number; past: number; today: number; upcoming: number } };
 
 export function billPeriodError(bill: Pick<CreateRentalBill, "periodStart" | "periodEnd">, connection: Pick<RentalConnection, "leaseStart" | "leaseEnd">): string | null {
   if (bill.periodStart < connection.leaseStart || connection.leaseEnd && bill.periodEnd > connection.leaseEnd) return "Keep the covered period within the rental dates shared with your renter.";

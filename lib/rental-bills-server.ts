@@ -4,15 +4,16 @@ import { rentalBillEvents, rentalBills, rentalConnections } from "../db/schema";
 import type { AuthIdentity } from "./auth";
 import { getDb, HttpError } from "./server";
 import { philippinesDay } from "./rentals";
-import { billPeriodError, isBillingMonth, rentalBillAction, rentalBillInput, type RentalBill, type RentalBillsPage } from "./rental-bills";
+import { billPeriodError, isBillingMonth, rentalBillAction, rentalBillInput, type RentalBill, type RentalBillWithBalance, type RentalBillsPage } from "./rental-bills";
+import { billBalanceColumns, confirmedAmount, pendingAmount, pendingCount, remainingAmount, paymentHistoryForBill } from "./rental-payment-queries";
 
 const unavailable = () => new HttpError(404, "This rent bill is not available to this account.");
 const validId = (id: string) => { if (!z.string().uuid().safeParse(id).success) throw unavailable(); };
-async function accessibleBill(id: string, user: AuthIdentity) {
+export async function accessibleBill(id: string, user: AuthIdentity) {
   validId(id);
-  const [bill] = await getDb().select().from(rentalBills).where(and(eq(rentalBills.id, id), sql`(${rentalBills.ownerId} = ${user.userId} OR ${rentalBills.renterId} = ${user.userId})`)).limit(1);
+  const [bill] = await getDb().select({ ...getTableColumns(rentalBills), ...billBalanceColumns }).from(rentalBills).where(and(eq(rentalBills.id, id), sql`(${rentalBills.ownerId} = ${user.userId} OR ${rentalBills.renterId} = ${user.userId})`)).limit(1);
   if (!bill) throw unavailable();
-  return bill as RentalBill;
+  return bill as RentalBillWithBalance;
 }
 
 export async function rentalBillsFor(url: URL, user: AuthIdentity): Promise<RentalBillsPage> {
@@ -20,21 +21,22 @@ export async function rentalBillsFor(url: URL, user: AuthIdentity): Promise<Rent
   const db = getDb(), day = philippinesDay();
   const scope = and(eq(query.role === "owner" ? rentalBills.ownerId : rentalBills.renterId, user.userId), eq(rentalBills.month, query.month));
   const [rows, totals] = await Promise.all([
-    db.select({ ...getTableColumns(rentalBills), propertyName: rentalConnections.propertyName, unitName: rentalConnections.unitName, ownerName: rentalConnections.ownerName, renterName: rentalConnections.renterName }).from(rentalBills).innerJoin(rentalConnections, eq(rentalConnections.id, rentalBills.connectionId)).where(scope).orderBy(asc(rentalBills.dueDate), desc(rentalBills.createdAt), asc(rentalBills.id)).limit(101).offset(query.page * 100),
-    db.select({ count: sql<number>`count(*)`, amountCents: sql<number>`coalesce(sum(${rentalBills.amountCents}), 0)`, past: sql<number>`coalesce(sum(case when ${rentalBills.dueDate} < ${day} then 1 else 0 end), 0)`, today: sql<number>`coalesce(sum(case when ${rentalBills.dueDate} = ${day} then 1 else 0 end), 0)`, upcoming: sql<number>`coalesce(sum(case when ${rentalBills.dueDate} > ${day} then 1 else 0 end), 0)` }).from(rentalBills).where(and(scope, eq(rentalBills.status, "issued"))),
+    db.select({ ...getTableColumns(rentalBills), ...billBalanceColumns, propertyName: rentalConnections.propertyName, unitName: rentalConnections.unitName, ownerName: rentalConnections.ownerName, renterName: rentalConnections.renterName }).from(rentalBills).innerJoin(rentalConnections, eq(rentalConnections.id, rentalBills.connectionId)).where(scope).orderBy(asc(rentalBills.dueDate), desc(rentalBills.createdAt), asc(rentalBills.id)).limit(101).offset(query.page * 100),
+    db.select({ count: sql<number>`count(*)`, amountCents: sql<number>`coalesce(sum(${rentalBills.amountCents}), 0)`, confirmedCents: sql<number>`coalesce(sum(${confirmedAmount}), 0)`, remainingCents: sql<number>`coalesce(sum(${remainingAmount}), 0)`, pendingCents: sql<number>`coalesce(sum(${pendingAmount}), 0)`, pendingCount: sql<number>`coalesce(sum(${pendingCount}), 0)`, past: sql<number>`coalesce(sum(case when ${rentalBills.dueDate} < ${day} AND ${remainingAmount} > 0 then 1 else 0 end), 0)`, today: sql<number>`coalesce(sum(case when ${rentalBills.dueDate} = ${day} AND ${remainingAmount} > 0 then 1 else 0 end), 0)`, upcoming: sql<number>`coalesce(sum(case when ${rentalBills.dueDate} > ${day} AND ${remainingAmount} > 0 then 1 else 0 end), 0)` }).from(rentalBills).where(and(scope, eq(rentalBills.status, "issued"))),
   ]);
   return { bills: rows.slice(0, 100) as RentalBillsPage["bills"], hasMore: rows.length > 100, totals: totals[0], month: query.month };
 }
 
-export async function rentalBillFor(id: string, user: AuthIdentity) {
+export async function rentalBillFor(id: string, user: AuthIdentity, paymentPage = 0) {
   const bill = await accessibleBill(id, user), db = getDb();
-  const [connections, events, current] = await Promise.all([
+  const [connections, events, current, history] = await Promise.all([
     db.select().from(rentalConnections).where(eq(rentalConnections.id, bill.connectionId)).limit(1),
     db.select().from(rentalBillEvents).where(eq(rentalBillEvents.billId, id)).orderBy(asc(rentalBillEvents.createdAt)),
     db.select({ id: rentalBills.id }).from(rentalBills).where(and(eq(rentalBills.connectionId, bill.connectionId), eq(rentalBills.month, bill.month), eq(rentalBills.status, "issued"))).limit(1),
+    paymentHistoryForBill(id, paymentPage, bill.ownerId === user.userId),
   ]);
   if (!connections.length) throw unavailable();
-  return { bill, connection: connections[0], events, currentBillId: current[0]?.id || null };
+  return { bill, connection: connections[0], events, currentBillId: current[0]?.id || null, ...history };
 }
 
 export async function createRentalBill(input: unknown, user: AuthIdentity) {

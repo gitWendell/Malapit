@@ -8,6 +8,6 @@ export default function PolicyLayout({ title, intro, children }: { title: string
       <div className="policy-intro"><p className="eyebrow">Malapit / Philippines</p><h1>{title}</h1><p>{intro}</p><span>Updated November 17, 2026 · Testing version</span></div>
       <article className="policy-content">{children}</article>
     </main>
-    <footer className="policy-footer"><span>Find a place that feels close.</span><nav aria-label="Website information"><a href="/privacy">Privacy notice</a><a href="/terms">Terms of use</a><a href="mailto:casulwendell12@gmail.com">Contact</a></nav></footer>
+    <footer className="policy-footer"><span>Find a place that feels close.</span><nav aria-label="Website information"><a href="/guide">How to use Malapit</a><a href="/privacy">Privacy notice</a><a href="/terms">Terms of use</a><a href="mailto:casulwendell12@gmail.com">Contact</a></nav></footer>
   </div>;
 }

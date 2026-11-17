@@ -1,9 +1,10 @@
 import { env } from "cloudflare:workers";
-import { and, desc, eq, gt, isNull, ne, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, gt, isNull, ne, or } from "drizzle-orm";
 import { rentalBills, rentalConnections, rentalEvents, rentalUnits } from "../db/schema";
 import { getDb, HttpError, routeError } from "./server";
 import type { AuthIdentity } from "./auth";
 import { effectiveRentalStatus, normalizeRentalEmail, philippinesDay, RENTAL_LIMITS, rentalConnectionAction, rentalCreateRequest, rentalInviteInput, rentalUnitAction, rentalUnitInput, type RentalConnection, type RentalsData } from "./rentals";
+import { billBalanceColumns } from "./rental-payment-queries";
 
 const unavailable = () => new HttpError(404, "This rental record is not available to this account.");
 function database() { if (!env.DB) throw new HttpError(503, "My Rentals is temporarily unavailable."); return env.DB; }
@@ -59,7 +60,7 @@ export async function rentalConnectionFor(id: string, user: AuthIdentity) {
   const row = await accessibleConnection(id, user);
   const [events, bills] = await Promise.all([
     getDb().select().from(rentalEvents).where(eq(rentalEvents.connectionId, id)).orderBy(desc(rentalEvents.createdAt)).limit(30),
-    getDb().select().from(rentalBills).where(and(eq(rentalBills.connectionId, id), or(eq(rentalBills.ownerId, user.userId), eq(rentalBills.renterId, user.userId)))).orderBy(desc(rentalBills.month), desc(rentalBills.createdAt)).limit(12),
+    getDb().select({ ...getTableColumns(rentalBills), ...billBalanceColumns }).from(rentalBills).where(and(eq(rentalBills.connectionId, id), or(eq(rentalBills.ownerId, user.userId), eq(rentalBills.renterId, user.userId)))).orderBy(desc(rentalBills.month), desc(rentalBills.createdAt)).limit(12),
   ]);
   return { connection: connection(row), events, bills };
 }
@@ -144,6 +145,18 @@ export function rentalError(error: unknown): Response {
   let details = "";
   for (let cause = error, depth = 0; cause instanceof Error && depth < 5; depth++, cause = cause.cause) details += " " + cause.message;
   const rules: [string, number, string][] = [
+    ["RENTAL_PAYMENTS_FULL", 409, "Payment records have reached the testing limit. Please contact Malapit."],
+    ["RENTAL_PAYMENTS_DAILY", 429, "You can add up to 30 payment records per Philippine day. Please try again tomorrow."],
+    ["RENTAL_PAYMENT_BILL", 409, "This bill changed or was cancelled. Refresh before recording a payment."],
+    ["RENTAL_PAYMENT_OVERPAY", 409, "The amount exceeds this bill’s remaining balance in the records."],
+    ["RENTAL_PAYMENT_DUPLICATE", 409, "This reference already appears on another confirmed record. Check it and give a reason before confirming it again."],
+    ["RENTAL_PAYMENT_PENDING", 409, "This bill already has a payment awaiting confirmation. Review or cancel that report first."],
+    ["UNIQUE constraint failed: rental_payments.bill_id", 409, "This bill already has a payment awaiting confirmation. Review or cancel that report first."],
+    ["UNIQUE constraint failed: rental_payments.id", 409, "This payment request was already used. Refresh the bill."],
+    ["RENTAL_PAYMENT_STATE", 409, "This payment record changed. Refresh the bill before trying again."],
+    ["RENTAL_PAYMENT_DATE", 400, "Enter a valid payment date that is not in the future."],
+    ["RENTAL_PAYMENT_AMOUNT", 400, "Enter an amount in whole cents."],
+    ["RENTAL_BILL_HAS_PAYMENTS", 409, "This bill has a pending or confirmed payment record. Review its payment history before cancelling it."],
     ["RENTAL_BILLS_FULL", 409, "Rent bills have reached the testing limit. Please contact Malapit."],
     ["RENTAL_BILLS_DAILY", 429, "You can create up to 60 rent bills per Philippine day. Please try again tomorrow."],
     ["RENTAL_BILL_CONNECTION", 409, "This rental connection changed or closed. Refresh before creating a bill."],

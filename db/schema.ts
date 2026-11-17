@@ -64,3 +64,22 @@ export const rentalBillEvents = sqliteTable("rental_bill_events", {
   id: text("id").primaryKey(), billId: text("bill_id").notNull().references(() => rentalBills.id), actorId: text("actor_id").notNull(),
   actorName: text("actor_name").notNull(), action: text("action").notNull(), reason: text("reason").notNull().default(""), createdAt: text("created_at").notNull(),
 }, table => [index("rental_bill_events_bill").on(table.billId, table.createdAt)]);
+
+export const rentalPayments = sqliteTable("rental_payments", {
+  id: text("id").primaryKey(), billId: text("bill_id").notNull().references(() => rentalBills.id), ownerId: text("owner_id").notNull(), renterId: text("renter_id").notNull(), submittedBy: text("submitted_by").notNull(),
+  amountCents: integer("amount_cents").notNull(), method: text("method").notNull(), paidAt: text("paid_at").notNull(), reference: text("reference").notNull().default(""), referenceKey: text("reference_key"), note: text("note").notNull().default(""),
+  status: text("status").notNull(), createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(),
+  reviewedAt: text("reviewed_at"), reviewedBy: text("reviewed_by"), decisionReason: text("decision_reason"), duplicateReason: text("duplicate_reason"),
+  reversedAt: text("reversed_at"), reversedBy: text("reversed_by"), reversalReason: text("reversal_reason"),
+}, table => [
+  uniqueIndex("rental_payment_pending_bill").on(table.billId).where(sql`${table.status} = 'pending'`),
+  index("rental_payments_bill_status").on(table.billId, table.status), index("rental_payments_bill_created").on(table.billId, table.createdAt),
+  index("rental_payments_reference").on(table.ownerId, table.method, table.referenceKey, table.status), index("rental_payments_daily").on(table.submittedBy, table.createdDay),
+  check("rental_payment_amount", sql`${table.amountCents} BETWEEN 1 AND 100000000`),
+  check("rental_payment_method", sql`${table.method} IN ('cash', 'gcash', 'maya', 'bank', 'other')`),
+  check("rental_payment_status", sql`${table.status} IN ('pending', 'confirmed', 'rejected', 'cancelled', 'reversed')`),
+]);
+export const rentalPaymentEvents = sqliteTable("rental_payment_events", {
+  id: text("id").primaryKey(), paymentId: text("payment_id").notNull().references(() => rentalPayments.id), actorId: text("actor_id").notNull(), actorName: text("actor_name").notNull(),
+  action: text("action").notNull(), reason: text("reason").notNull().default(""), createdAt: text("created_at").notNull(),
+}, table => [index("rental_payment_events_payment").on(table.paymentId, table.createdAt)]);
