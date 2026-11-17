@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { and, desc, eq, gt, isNull, ne, or } from "drizzle-orm";
-import { rentalConnections, rentalEvents, rentalUnits } from "../db/schema";
+import { rentalBills, rentalConnections, rentalEvents, rentalUnits } from "../db/schema";
 import { getDb, HttpError, routeError } from "./server";
 import type { AuthIdentity } from "./auth";
 import { effectiveRentalStatus, normalizeRentalEmail, philippinesDay, RENTAL_LIMITS, rentalConnectionAction, rentalCreateRequest, rentalInviteInput, rentalUnitAction, rentalUnitInput, type RentalConnection, type RentalsData } from "./rentals";
@@ -57,8 +57,11 @@ async function accessibleConnection(id: string, user: AuthIdentity) {
 
 export async function rentalConnectionFor(id: string, user: AuthIdentity) {
   const row = await accessibleConnection(id, user);
-  const events = await getDb().select().from(rentalEvents).where(eq(rentalEvents.connectionId, id)).orderBy(desc(rentalEvents.createdAt)).limit(30);
-  return { connection: connection(row), events };
+  const [events, bills] = await Promise.all([
+    getDb().select().from(rentalEvents).where(eq(rentalEvents.connectionId, id)).orderBy(desc(rentalEvents.createdAt)).limit(30),
+    getDb().select().from(rentalBills).where(and(eq(rentalBills.connectionId, id), or(eq(rentalBills.ownerId, user.userId), eq(rentalBills.renterId, user.userId)))).orderBy(desc(rentalBills.month), desc(rentalBills.createdAt)).limit(12),
+  ]);
+  return { connection: connection(row), events, bills };
 }
 
 export async function createRentalUnit(input: unknown, user: AuthIdentity) {
@@ -141,6 +144,14 @@ export function rentalError(error: unknown): Response {
   let details = "";
   for (let cause = error, depth = 0; cause instanceof Error && depth < 5; depth++, cause = cause.cause) details += " " + cause.message;
   const rules: [string, number, string][] = [
+    ["RENTAL_BILLS_FULL", 409, "Rent bills have reached the testing limit. Please contact Malapit."],
+    ["RENTAL_BILLS_DAILY", 429, "You can create up to 60 rent bills per Philippine day. Please try again tomorrow."],
+    ["RENTAL_BILL_CONNECTION", 409, "This rental connection changed or closed. Refresh before creating a bill."],
+    ["RENTAL_BILL_PERIOD", 400, "Check the covered dates. Bills must stay within the agreed rental dates and cover up to 31 days."],
+    ["RENTAL_BILL_OVERLAP", 409, "An existing bill already covers some of these dates. Check it before creating another."],
+    ["RENTAL_BILL_MONTH", 409, "This rental already has a bill for that billing month. Open it, or cancel it for correction first."],
+    ["UNIQUE constraint failed: rental_bills.connection_id, rental_bills.month", 409, "This rental already has a bill for that billing month. Open it, or cancel it for correction first."],
+    ["UNIQUE constraint failed: rental_bills.id", 409, "This bill request was already used. Refresh your bills."],
     ["RENTAL_UNITS_FULL", 409, "My Rentals has reached its testing limit of 100 active units. Please contact Malapit."],
     ["RENTAL_OWNER_LIMIT", 409, "You can manage up to 30 active units. Archive an unused unit to add another."],
     ["RENTAL_INVITES_DAILY", 429, "You can prepare up to 30 invitations per Philippine day. Please try again tomorrow."],

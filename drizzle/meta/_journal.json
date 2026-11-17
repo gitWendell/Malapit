@@ -22,6 +22,13 @@
       "when": 1794817889452,
       "tag": "0002_supreme_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794893809723,
+      "tag": "0003_strong_jane_foster",
+      "breakpoints": true
     }
   ]
 }

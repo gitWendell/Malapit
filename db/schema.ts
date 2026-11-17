@@ -45,3 +45,22 @@ export const rentalConnections = sqliteTable("rental_connections", {
 export const rentalEvents = sqliteTable("rental_events", {
   id: text("id").primaryKey(), connectionId: text("connection_id").notNull().references(() => rentalConnections.id), actorId: text("actor_id").notNull(), actorName: text("actor_name").notNull(), action: text("action").notNull(), createdAt: text("created_at").notNull(),
 }, table => [index("rental_events_connection").on(table.connectionId, table.createdAt)]);
+
+export const rentalBills = sqliteTable("rental_bills", {
+  id: text("id").primaryKey(), connectionId: text("connection_id").notNull().references(() => rentalConnections.id),
+  ownerId: text("owner_id").notNull(), renterId: text("renter_id").notNull(),
+  month: text("month").notNull(), periodStart: text("period_start").notNull(), periodEnd: text("period_end").notNull(), dueDate: text("due_date").notNull(),
+  amountCents: integer("amount_cents").notNull(), note: text("note").notNull().default(""), status: text("status").notNull().default("issued"),
+  createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(), voidedAt: text("voided_at"), voidReason: text("void_reason"),
+}, table => [
+  uniqueIndex("rental_bill_live_month").on(table.connectionId, table.month).where(sql`${table.status} = 'issued'`),
+  index("rental_bills_owner_month").on(table.ownerId, table.month, table.dueDate), index("rental_bills_renter_month").on(table.renterId, table.month, table.dueDate),
+  index("rental_bills_daily").on(table.ownerId, table.createdDay), index("rental_bills_period").on(table.connectionId, table.status, table.periodStart, table.periodEnd),
+  check("rental_bill_amount", sql`${table.amountCents} BETWEEN 1 AND 100000000`),
+  check("rental_bill_status", sql`${table.status} IN ('issued', 'voided')`),
+]);
+
+export const rentalBillEvents = sqliteTable("rental_bill_events", {
+  id: text("id").primaryKey(), billId: text("bill_id").notNull().references(() => rentalBills.id), actorId: text("actor_id").notNull(),
+  actorName: text("actor_name").notNull(), action: text("action").notNull(), reason: text("reason").notNull().default(""), createdAt: text("created_at").notNull(),
+}, table => [index("rental_bill_events_bill").on(table.billId, table.createdAt)]);

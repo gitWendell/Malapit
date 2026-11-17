@@ -1,6 +1,6 @@
 # Malapit rental management — process and release scope
 
-Prepared November 16, 2026, following the owner's request to manage rent and property concerns alongside rental discovery. **My Rentals is part of the same Malapit app and account.** This release implements private units, rent and date details, intended-email invitations, acceptance/decline, revocation, closed connections and retained history. The monthly bills, payment records, repairs and payment collection described below are later stages. The separate fictional dashboard preview remains a demonstration, not live tenant data.
+Prepared November 16 and updated November 17, 2026, following the owner's request to manage rent and property concerns alongside rental discovery. **My Rentals is part of the same Malapit app and account.** The current release implements private units, rent and date details, intended-email invitations, acceptance/decline, revocation, closed connections, monthly rent bills and retained correction history. Payment records, repairs and payment collection described below are later stages. The separate fictional dashboard preview remains a demonstration, not live tenant data.
 
 ## Current release
 
@@ -11,13 +11,23 @@ Prepared November 16, 2026, following the owner's request to manage rent and pro
 - Closing a Malapit connection preserves history; it does not terminate a lease. The app neither signs an agreement nor collects money.
 - The free test allows 100 active private units in total, 30 per owner, and 30 invitations per owner per Philippine day. Public listing limits remain separate.
 
-The first version supports one owner/manager account and one renter account per connection. Shared tenancy participants, deposits, advances and utilities are not recorded as separate financial items yet. Start with the connection, then add monthly bills before recording payments.
+The first version supports one owner/manager account and one renter account per connection. Shared tenancy participants, deposits, advances and utilities are not recorded as separate financial items yet.
+
+## Monthly bill release — November 17
+
+- The owner creates each month's rent bill inside an accepted, open connection. Nothing is generated or charged automatically.
+- The billing month identifies the month in which the covered period starts. Default dates use the calendar month, clipped to the agreed rental dates. Owners can change the coverage for their agreed cycle, such as November 17–December 16, up to 31 days. A partial first/last month starts with an empty amount so the owner enters the agreed charge; no prorating rule is assumed.
+- The due date starts with the agreed due day, using the last day in shorter months, and can be reviewed and changed before sharing. Money is stored as integer cents. Only rent is recorded in this release.
+- One current bill is allowed per connection and billing month. Current covered periods cannot overlap, including across month boundaries. Concurrent/repeated requests cannot silently create duplicate bills.
+- Owner and renter see the same private bill, owner note and history. Monthly totals show **Rent billed**, excluding cancelled bills. They are not collections, profit or a confirmed unpaid balance. **Upcoming**, **Due today** and **Due date passed** describe dates only; the app does not yet know whether an external payment was received.
+- The owner corrects a bill by cancelling it with a reason and creating a replacement while the connection remains open. Original details and both history events stay visible. Closing a connection stops new bills and preserves existing records for the original parties.
+- Bill history is paged by billing month in My Rentals. The connection shows its latest 12 bills; older records remain available through the month selector. Limits are 10,000 historical bills across the test and 60 creations per owner per Philippine day. Cancelling does not reset the limits.
 
 ## Purpose and first scope
 
 Help owners manage existing rentals and help renters keep track of their own rent and concerns. Owners may add an existing tenant even when that person found the property elsewhere. Map listings and private rental-management records are separate: adding a unit or tenant does not publish a listing.
 
-The planned management workflow includes units, accepted owner–renter connections, agreed rent and due dates, monthly bills, manual payment records, owner confirmation, an activity history and repair requests. Only the connection foundation is included in the current release. Future reminders will be visible inside the app first. Email, SMS, push notifications, money collection, automatic deductions, electronic signatures and paid management plans require later work.
+The planned management workflow includes units, accepted owner–renter connections, agreed rent and due dates, monthly bills, manual payment records, owner confirmation, an activity history and repair requests. The connection foundation and monthly rent bills are included in the current release. Due-date reminders are visible inside the app. Email, SMS, push notifications, automatic monthly generation, money collection, automatic deductions, electronic signatures and paid management plans require later work.
 
 ## People and access
 
@@ -123,7 +133,7 @@ Measure bills acknowledged, time spent checking payments, unresolved corrections
 
 The separate clickable preview uses fictional accounts, one sample property, November 2026 bills, manual payment submissions and repair tickets. Owner and renter views share the example state so confirmation and issue updates can be followed. It does not call the live app, move money, upload real evidence or send messages.
 
-Accepted rental records and permissions are now implemented. Next, build monthly bills, then payment submissions/confirmation and repairs. Add gateway collection only after the provider and business arrangements are approved. The existing map and listings remain the public discovery area of the same app throughout.
+Accepted rental records, permissions and monthly rent bills are implemented. Next, build payment submissions/confirmation, then repairs. Add gateway collection only after the provider and business arrangements are approved. The existing map and listings remain the public discovery area of the same app throughout.
 
 ## Sources checked November 16, 2026
 
