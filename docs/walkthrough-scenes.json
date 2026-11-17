@@ -1,18 +1,86 @@
 [
-  {"image":"01-map.png","title":"Find a nearby rental","caption":"Browse the map and filters. Example homes in this demo are fictional.","narration":"Welcome to Malapit. Use the map, location search and filters to find nearby rentals. The homes and people shown in this guide are fictional."},
-  {"image":"02-list-property.png","title":"Advertise a property","caption":"Owners use List your place to submit a public listing for review.","narration":"To advertise a property, choose List your place. Add its details, location, photos and costs. A listing goes through review before appearing publicly."},
-  {"image":"03-add-unit.png","title":"Add a private unit","caption":"My Rentals keeps your private unit, agreed rent and rental dates together.","narration":"For an existing rental, open My Rentals and add your unit or room. Record the rent, due day and dates agreed with your renter. This does not publish a listing."},
-  {"image":"04-invite-renter.png","title":"Invite your renter","caption":"Use their Google sign-in email. Copy and share the invitation link yourself.","narration":"Invite the renter using their Google sign in email. Check the unit details first. Copy and share the invitation link yourself. Malapit does not send an email."},
-  {"image":"05-accept-invitation.png","title":"Renter reviews the invitation","caption":"Check the owner, unit, rent and dates before accepting the private connection.","narration":"In the renter account, review the invitation. Check the owner, address, rent and rental dates before accepting. This connects the record; it does not sign a lease."},
-  {"image":"06-create-bill.png","title":"Create the monthly bill","caption":"Check the covered dates, amount and due date. Partial-month rent is entered manually.","narration":"The owner can now create a rent bill. Check its billing month, covered dates, amount and due date. Enter the agreed amount for a partial month yourself."},
-  {"image":"07-renter-bill.png","title":"Both accounts see the bill","caption":"The renter sees the same private bill and its remaining balance in the records.","narration":"The renter sees the same bill in My Rentals. Open it to review the amount, covered period and remaining balance. Money is paid directly to the owner."},
-  {"image":"08-report-payment.png","title":"Report a payment","caption":"After paying the owner directly, enter the amount, method, date and reference.","narration":"After paying the owner directly, choose Report a payment. Enter the amount, method, date and transaction reference. You can report a partial payment."},
-  {"image":"09-awaiting-confirmation.png","title":"Wait for owner confirmation","caption":"A report stays Awaiting confirmation. Pending amounts do not reduce the balance.","narration":"The report is now awaiting confirmation. Its amount is shown separately. Reporting a payment does not mark the bill paid or reduce the confirmed balance."},
-  {"image":"10-owner-review.png","title":"Owner checks receipt","caption":"Compare the report with your original cash, bank or wallet records before confirming.","narration":"The owner opens the report and checks the original cash, bank or wallet records. Confirm receipt only after checking. If something is wrong, request a correction with a reason."},
-  {"image":"11-partial-payment.png","title":"See the remaining balance","caption":"Only confirmed amounts reduce the balance. A partial payment leaves the remainder visible.","narration":"Once confirmed by the owner, the payment reduces the balance. In this example, three thousand pesos is confirmed and five thousand pesos remains."},
-  {"image":"12-record-cash.png","title":"Record money already received","caption":"Owners can also record a payment they have already checked and received.","narration":"Owners can record money they have already received, including cash. Check the amount and date, choose the method, and confirm receipt before saving."},
-  {"image":"13-paid-bill.png","title":"Paid in the records","caption":"The bill shows Paid when owner-confirmed records cover its full amount.","narration":"The bill shows Paid when the owner confirmed records cover the full amount. This is a shared record of the owner's confirmation, not a transfer processed by Malapit."},
-  {"image":"14-history.png","title":"Keep the payment history","caption":"Both people can review the original amounts, decisions, dates and reasons.","narration":"Open Payment history to review who reported, confirmed or corrected a record. The original amounts and decisions remain visible to the original owner and renter."},
-  {"image":"15-corrections.png","title":"Correct a confirmed record","caption":"A reversal needs a reason and keeps the original history. It does not return money.","narration":"To correct a confirmed record, the owner uses a reversal and gives a reason. A reversal changes the recorded balance. It does not move or return money."},
-  {"image":"16-overview.png","title":"Your records, in one place","caption":"Use the monthly overview to track bills, confirmed amounts and remaining balances.","narration":"Your rental map, bills and owner confirmed payment records are in one Malapit account. Use the monthly overview to stay organised. Always arrange actual money transfers directly."}
+  {
+    "id": "map",
+    "title": "Find your kind of place",
+    "role": "Explore",
+    "caption": "Tap a price. Open a home. See what is nearby.",
+    "narration": "Looking for a place nearby? Start with the map. Tap a price, then open the home. Everything in this demo is fictional."
+  },
+  {
+    "id": "listing",
+    "title": "Have a place to rent out?",
+    "role": "Owner",
+    "caption": "List your place, add its details, and submit it for review.",
+    "narration": "Have a place to rent out? Choose List your place. Add the details, location, photos and costs, then submit it for review."
+  },
+  {
+    "id": "unit",
+    "title": "Bring your existing rental",
+    "role": "Owner",
+    "caption": "My Rentals → Add a unit. Check the agreed rent and dates.",
+    "narration": "Already have a renter? Open My Rentals and add your room. Let's use eight thousand pesos a month. Check the rent and dates before saving."
+  },
+  {
+    "id": "invite",
+    "title": "Connect with your renter",
+    "role": "Owner",
+    "caption": "Invite their Google sign-in email. Share the link yourself.",
+    "narration": "Next, invite your renter using their Google sign in email. Check the details, create the invitation, and share the link yourself."
+  },
+  {
+    "id": "accept",
+    "title": "Now, the renter’s side",
+    "role": "Renter",
+    "caption": "Review the owner, rent and dates. Then accept the connection.",
+    "narration": "Here's the renter's side. Open the invitation, check the owner, rent and dates, then accept. You're now connected."
+  },
+  {
+    "id": "bill",
+    "title": "Create the monthly bill",
+    "role": "Owner",
+    "caption": "Check the covered dates, amount and due date before sharing.",
+    "narration": "Back with the owner, create a monthly rent bill. Check the covered dates, amount and due date. Both people can see this bill."
+  },
+  {
+    "id": "report",
+    "title": "Paid the owner? Record it here.",
+    "role": "Renter",
+    "caption": "Enter the amount, method, date and transaction reference.",
+    "narration": "Paid the owner directly? Report it here. Let's enter three thousand pesos, choose G Cash, and add the transaction reference. Then send the report."
+  },
+  {
+    "id": "pending",
+    "title": "A report still needs checking",
+    "role": "Renter",
+    "caption": "Awaiting confirmation. The balance stays at ₱8,000 for now.",
+    "narration": "Notice Awaiting confirmation? The balance is still eight thousand pesos. A report only reduces the balance after the owner checks and confirms it."
+  },
+  {
+    "id": "confirm",
+    "title": "Check it. Then confirm.",
+    "role": "Owner",
+    "caption": "Check your original bank or wallet records before confirming receipt.",
+    "narration": "The owner checks the actual bank or wallet record, then confirms receipt. There we go. Three thousand confirmed, and five thousand left."
+  },
+  {
+    "id": "cash",
+    "title": "Cash works too",
+    "role": "Owner",
+    "caption": "Record money you already received. A full balance becomes Paid.",
+    "narration": "Already received the remaining five thousand in cash? Record it here and confirm you've received it. Now the bill is marked Paid."
+  },
+  {
+    "id": "history",
+    "title": "Keep the full story",
+    "role": "Owner",
+    "caption": "Open the history. Corrections keep the original record and a reason.",
+    "narration": "Open Payment history to see who reported and confirmed. Made a mistake? Use a correction and leave a reason. The original history stays."
+  },
+  {
+    "id": "overview",
+    "title": "Both sides, on the same page",
+    "role": "My Rentals",
+    "caption": "Find a home. Track your bills. Keep your rent records together.",
+    "narration": "That's it. Find a rental, track your monthly bills, and keep both sides on the same page. Money is always paid directly to the owner."
+  }
 ]

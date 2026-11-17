@@ -1,50 +1,38 @@
-Malapit quick guide
-Fictional demonstration data. No money transferred.
+Malapit animated quick guide
+Fictional demonstration. Synthetic narration. Money is paid directly.
 
-Find a nearby rental
-Welcome to Malapit. Use the map, location search and filters to find nearby rentals. The homes and people shown in this guide are fictional.
+Find your kind of place
+Looking for a place nearby? Start with the map. Tap a price, then open the home. Everything in this demo is fictional.
 
-Advertise a property
-To advertise a property, choose List your place. Add its details, location, photos and costs. A listing goes through review before appearing publicly.
+Have a place to rent out?
+Have a place to rent out? Choose List your place. Add the details, location, photos and costs, then submit it for review.
 
-Add a private unit
-For an existing rental, open My Rentals and add your unit or room. Record the rent, due day and dates agreed with your renter. This does not publish a listing.
+Bring your existing rental
+Already have a renter? Open My Rentals and add your room. Let's use eight thousand pesos a month. Check the rent and dates before saving.
 
-Invite your renter
-Invite the renter using their Google sign in email. Check the unit details first. Copy and share the invitation link yourself. Malapit does not send an email.
+Connect with your renter
+Next, invite your renter using their Google sign in email. Check the details, create the invitation, and share the link yourself.
 
-Renter reviews the invitation
-In the renter account, review the invitation. Check the owner, address, rent and rental dates before accepting. This connects the record; it does not sign a lease.
+Now, the renter’s side
+Here's the renter's side. Open the invitation, check the owner, rent and dates, then accept. You're now connected.
 
 Create the monthly bill
-The owner can now create a rent bill. Check its billing month, covered dates, amount and due date. Enter the agreed amount for a partial month yourself.
+Back with the owner, create a monthly rent bill. Check the covered dates, amount and due date. Both people can see this bill.
 
-Both accounts see the bill
-The renter sees the same bill in My Rentals. Open it to review the amount, covered period and remaining balance. Money is paid directly to the owner.
+Paid the owner? Record it here.
+Paid the owner directly? Report it here. Let's enter three thousand pesos, choose G Cash, and add the transaction reference. Then send the report.
 
-Report a payment
-After paying the owner directly, choose Report a payment. Enter the amount, method, date and transaction reference. You can report a partial payment.
+A report still needs checking
+Notice Awaiting confirmation? The balance is still eight thousand pesos. A report only reduces the balance after the owner checks and confirms it.
 
-Wait for owner confirmation
-The report is now awaiting confirmation. Its amount is shown separately. Reporting a payment does not mark the bill paid or reduce the confirmed balance.
+Check it. Then confirm.
+The owner checks the actual bank or wallet record, then confirms receipt. There we go. Three thousand confirmed, and five thousand left.
 
-Owner checks receipt
-The owner opens the report and checks the original cash, bank or wallet records. Confirm receipt only after checking. If something is wrong, request a correction with a reason.
+Cash works too
+Already received the remaining five thousand in cash? Record it here and confirm you've received it. Now the bill is marked Paid.
 
-See the remaining balance
-Once confirmed by the owner, the payment reduces the balance. In this example, three thousand pesos is confirmed and five thousand pesos remains.
+Keep the full story
+Open Payment history to see who reported and confirmed. Made a mistake? Use a correction and leave a reason. The original history stays.
 
-Record money already received
-Owners can record money they have already received, including cash. Check the amount and date, choose the method, and confirm receipt before saving.
-
-Paid in the records
-The bill shows Paid when the owner confirmed records cover the full amount. This is a shared record of the owner's confirmation, not a transfer processed by Malapit.
-
-Keep the payment history
-Open Payment history to review who reported, confirmed or corrected a record. The original amounts and decisions remain visible to the original owner and renter.
-
-Correct a confirmed record
-To correct a confirmed record, the owner uses a reversal and gives a reason. A reversal changes the recorded balance. It does not move or return money.
-
-Your records, in one place
-Your rental map, bills and owner confirmed payment records are in one Malapit account. Use the monthly overview to stay organised. Always arrange actual money transfers directly.
+Both sides, on the same page
+That's it. Find a rental, track your monthly bills, and keep both sides on the same page. Money is always paid directly to the owner.

@@ -1,65 +1,118 @@
 WEBVTT
 
-1
-00:00:00.000 --> 00:00:09.400
-Welcome to Malapit. Use the map, location search and filters to find nearby rentals. The homes and people shown in this guide are fictional.
+00:00:00.200 --> 00:00:01.902
+Looking for a place nearby?
 
-2
-00:00:09.400 --> 00:00:20.344
-To advertise a property, choose List your place. Add its details, location, photos and costs. A listing goes through review before appearing publicly.
+00:00:01.902 --> 00:00:03.100
+Start with the map.
 
-3
-00:00:20.344 --> 00:00:30.544
-For an existing rental, open My Rentals and add your unit or room. Record the rent, due day and dates agreed with your renter. This does not publish a listing.
+00:00:03.100 --> 00:00:05.117
+Tap a price, then open the home.
 
-4
-00:00:30.544 --> 00:00:41.144
-Invite the renter using their Google sign in email. Check the unit details first. Copy and share the invitation link yourself. Malapit does not send an email.
+00:00:05.117 --> 00:00:07.450
+Everything in this demo is fictional.
 
-5
-00:00:41.144 --> 00:00:52.364
-In the renter account, review the invitation. Check the owner, address, rent and rental dates before accepting. This connects the record; it does not sign a lease.
+00:00:08.117 --> 00:00:09.782
+Have a place to rent out?
 
-6
-00:00:52.364 --> 00:01:02.320
-The owner can now create a rent bill. Check its billing month, covered dates, amount and due date. Enter the agreed amount for a partial month yourself.
+00:00:09.782 --> 00:00:11.313
+Choose List your place.
 
-7
-00:01:02.320 --> 00:01:11.787
-The renter sees the same bill in My Rentals. Open it to review the amount, covered period and remaining balance. Money is paid directly to the owner.
+00:00:11.313 --> 00:00:16.042
+Add the details, location, photos and costs, then submit it for review.
 
-8
-00:01:11.787 --> 00:01:21.927
-After paying the owner directly, choose Report a payment. Enter the amount, method, date and transaction reference. You can report a partial payment.
+00:00:16.700 --> 00:00:18.169
+Already have a renter?
 
-9
-00:01:21.927 --> 00:01:31.478
-The report is now awaiting confirmation. Its amount is shown separately. Reporting a payment does not mark the bill paid or reduce the confirmed balance.
+00:00:18.169 --> 00:00:20.440
+Open My Rentals and add your room.
 
-10
-00:01:31.478 --> 00:01:43.078
-The owner opens the report and checks the original cash, bank or wallet records. Confirm receipt only after checking. If something is wrong, request a correction with a reason.
+00:00:20.440 --> 00:00:23.045
+Let's use eight thousand pesos a month.
 
-11
-00:01:43.078 --> 00:01:53.278
-Once confirmed by the owner, the payment reduces the balance. In this example, three thousand pesos is confirmed and five thousand pesos remains.
+00:00:23.045 --> 00:00:25.650
+Check the rent and dates before saving.
 
-12
-00:01:53.278 --> 00:02:03.020
-Owners can record money they have already received, including cash. Check the amount and date, choose the method, and confirm receipt before saving.
+00:00:26.325 --> 00:00:30.233
+Next, invite your renter using their Google sign in email.
 
-13
-00:02:03.020 --> 00:02:13.292
-The bill shows Paid when the owner confirmed records cover the full amount. This is a shared record of the owner's confirmation, not a transfer processed by Malapit.
+00:00:30.233 --> 00:00:34.950
+Check the details, create the invitation, and share the link yourself.
 
-14
-00:02:13.292 --> 00:02:23.242
-Open Payment history to review who reported, confirmed or corrected a record. The original amounts and decisions remain visible to the original owner and renter.
+00:00:35.617 --> 00:00:37.207
+Here's the renter's side.
 
-15
-00:02:23.242 --> 00:02:33.309
-To correct a confirmed record, the owner uses a reversal and gives a reason. A reversal changes the recorded balance. It does not move or return money.
+00:00:37.207 --> 00:00:41.406
+Open the invitation, check the owner, rent and dates, then accept.
 
-16
-00:02:33.309 --> 00:02:44.931
-Your rental map, bills and owner confirmed payment records are in one Malapit account. Use the monthly overview to stay organised. Always arrange actual money transfers directly.
+00:00:41.406 --> 00:00:42.742
+You're now connected.
+
+00:00:43.408 --> 00:00:46.433
+Back with the owner, create a monthly rent bill.
+
+00:00:46.433 --> 00:00:49.268
+Check the covered dates, amount and due date.
+
+00:00:49.268 --> 00:00:51.158
+Both people can see this bill.
+
+00:00:51.825 --> 00:00:53.428
+Paid the owner directly?
+
+00:00:53.428 --> 00:00:54.430
+Report it here.
+
+00:00:54.430 --> 00:00:59.973
+Let's enter three thousand pesos, choose G Cash, and add the transaction reference.
+
+00:00:59.973 --> 00:01:01.375
+Then send the report.
+
+00:01:02.033 --> 00:01:04.042
+Notice Awaiting confirmation?
+
+00:01:04.042 --> 00:01:06.952
+The balance is still eight thousand pesos.
+
+00:01:06.952 --> 00:01:12.008
+A report only reduces the balance after the owner checks and confirms it.
+
+00:01:12.658 --> 00:01:17.575
+The owner checks the actual bank or wallet record, then confirms receipt.
+
+00:01:17.575 --> 00:01:18.383
+There we go.
+
+00:01:18.383 --> 00:01:21.683
+Three thousand confirmed, and five thousand left.
+
+00:01:22.367 --> 00:01:25.684
+Already received the remaining five thousand in cash?
+
+00:01:25.684 --> 00:01:28.564
+Record it here and confirm you've received it.
+
+00:01:28.564 --> 00:01:30.317
+Now the bill is marked Paid.
+
+00:01:30.992 --> 00:01:34.755
+Open Payment history to see who reported and confirmed.
+
+00:01:34.755 --> 00:01:35.781
+Made a mistake?
+
+00:01:35.781 --> 00:01:38.244
+Use a correction and leave a reason.
+
+00:01:38.244 --> 00:01:40.092
+The original history stays.
+
+00:01:40.742 --> 00:01:41.419
+That's it.
+
+00:01:41.419 --> 00:01:46.703
+Find a rental, track your monthly bills, and keep both sides on the same page.
+
+00:01:46.703 --> 00:01:49.617
+Money is always paid directly to the owner.

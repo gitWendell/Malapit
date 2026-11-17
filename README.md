@@ -83,7 +83,7 @@ The [rental-management process](docs/rental-management-process-v1.md) describes 
 - `db/`, `drizzle/`: D1 schema and append-only migrations.
 - `worker/`, `wrangler.jsonc`: Cloudflare entry point and bindings.
 - `docs/`: business process, research, and deployment guide.
-- `public/tutorial/`: narrated MP4, captions, poster and transcript from fictional local app screens. `docs/walkthrough-scenes.json` is the script; `scripts/create-walkthrough.mjs` assembles CUA-captured screenshots on macOS using Swift/AppKit, the installed Samantha voice and FFmpeg. No external recording connection is required.
+- `public/tutorial/`: animated MP4, captions, chapters, poster and transcript from fictional local app screens. It includes moving cursor paths, click effects, visible typing, transitions and local Kokoro narration. See [walkthrough production](docs/walkthrough-production.md) for the script and build steps. No paid recording service or speech API is used.
 
 Keep credentials in Cloudflare runtime secrets or ignored local environment files. Do not commit tokens, `.dev.vars`, database files, uploads, or build output. `.openai/hosting.json` has no original Site identity and is retained for the build integration.
 

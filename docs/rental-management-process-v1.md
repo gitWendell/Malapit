@@ -31,7 +31,7 @@ The first version supports one owner/manager account and one renter account per 
 - Only the owner may reverse a confirmed record, with a reason. The original amount, parties, dates, reference, confirmation and correction history stay visible. A reversal changes the recorded balance; it does not return money. A bill must have no pending or confirmed payments before cancellation for correction.
 - A reference already used on another confirmed record for this owner and payment method requires an owner explanation before confirmation. The cross-bill flag is visible only to the owner and does not declare fraud. The explanation is part of the shared payment record.
 - Limits are 20,000 historical payment entries across the test and 30 creations per person per Philippine day. Rejected, cancelled and reversed records still count. History is paged 20 entries at a time. Listing reviewers have no bypass; access stays with the bill's original owner and renter, including after a connection closes.
-- The public `/guide` page includes a 16-scene phone walkthrough with English narration, captions and a transcript. All demonstrated accounts, addresses and amounts are fictional and were created only in local development.
+- The public `/guide` page includes an animated phone walkthrough with 12 chapters, moving cursor paths, clicks, visible typing, English synthetic narration, captions and a transcript. All demonstrated accounts, addresses and amounts are fictional and were created only in local development.
 
 ## Purpose and first scope
 
