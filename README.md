@@ -19,9 +19,11 @@ This standalone test uses **Cloudflare Workers Free + D1 Free**, with **Supabase
 - Owner and renter review, accept/decline, revoke and close connections, with fixed shared details and a dated history. Vacant units can be edited, archived and restored.
 - Monthly rent bills with explicit covered dates, exact peso amounts, due dates, private notes and correction history. Owner and renter see the same records, with monthly totals and due-date labels.
 - Renter payment reports, owner receipt confirmation, partial balances, cash records and dated corrections. Pending reports stay separate from confirmed amounts.
+- Optional monthly bill creation after owner review, with pause controls and manual handling for partial months.
+- A private owner review list across units, renter payment shortcuts, and copyable bill messages with private links.
 - A phone-friendly [video and written guide](https://malapit-test.malapit-ph.workers.dev/guide), using fictional local demonstration data and English narration.
 
-The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. My Rentals invitations and bills appear inside the app; Malapit does not email them. Owners create each month's bill after checking its dates and amount. Owners check their own original records before confirming receipt. Malapit does not independently verify, collect, hold or transfer money. Repairs, payment-proof uploads, actual payment processing, automatic bill generation, paid promotions, email/SMS notifications, and automated ownership verification are not implemented.
+The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. My Rentals invitations and bills appear inside the app; Malapit does not email them. Owners can create bills manually or opt into full-calendar-month bills after reviewing the rent and dates. Owners check their own original records before confirming receipt. Malapit does not independently verify, collect, hold or transfer money. Repairs, payment-proof uploads, actual payment processing, paid promotions, email/SMS notifications, and automated ownership verification are not implemented.
 
 ## Free pilot setup
 
@@ -36,6 +38,8 @@ My Rentals separately allows 100 active private units across the test, 30 per ow
 Rent bills are limited to 10,000 historical records across the test and 60 creations per owner per Philippine day. Cancelled bills retain their history and still count toward these limits. The database prevents overlapping current covered periods and more than one current bill per connection and billing month. Corrections cancel and replace a bill, preserving the original amount and reason. Cancel a bill only after resolving pending reports and reversing confirmed records with a reason.
 
 Payment records are limited to 20,000 historical entries across the test and 30 creations per person per Philippine day. Cancelled, rejected and reversed entries still count. One pending report is allowed per bill. Database checks prevent confirmation or recording above the current balance and preserve the original amounts, parties, dates, references and action history. Only owner-confirmed records reduce a balance. Reversing a record changes the balance and preserves its history; it does not refund money. Monthly confirmed totals refer to the selected bills, not the date money was received, and are not profit.
+
+Automatic bills are off by default. The owner reviews and enables them per accepted connection for future full calendar months. Partial periods and other rent cycles stay manual. A job checks up to 12 due schedules every five minutes, using at most 49 D1 statements per run to fit the Free plan’s 50-query limit. Existing current bills are preserved; missed months and creation problems need review. Cancelling an automatic bill pauses future creation, and closing a connection stops its schedule. There are no automatic payment deductions. Free provider quotas can interrupt scheduling.
 
 ## Run locally
 
@@ -69,9 +73,10 @@ node scripts/smoke-test.mjs
 node scripts/rentals-smoke-test.mjs
 node scripts/rental-bills-smoke-test.mjs
 node scripts/rental-payments-smoke-test.mjs
+node scripts/rental-workload-smoke-test.mjs
 ```
 
-All four smoke tests are restricted to the built loopback Worker on port 5188. The original test checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. The rental test checks private unit ownership, intended-email invitations, concurrent responses, immutable shared details, expired/revoked invitations, past renter privacy, and archive/restore. The billing test checks scoped access, exact amounts, duplicate requests, overlapping dates, totals, concurrent cancellation and immutable correction history. The payment test checks reports, partial balances, owner confirmation, account isolation, repeated references, reversals and concurrent actions. Each removes only its own temporary records. Never retarget them to a deployed site.
+All five smoke tests are restricted to the built loopback Worker on port 5188. The original test checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. The rental test checks private unit ownership, intended-email invitations, concurrent responses, immutable shared details, expired/revoked invitations, past renter privacy, and archive/restore. The billing test checks scoped access, exact amounts, duplicate requests, overlapping dates, totals, concurrent cancellation and immutable correction history. The payment test checks reports, partial balances, owner confirmation, account isolation, repeated references, reversals and concurrent actions. The workload test checks schedules, the built scheduled handler, private review queues, payment defaults and replacement-renter privacy. It uses a temporary loopback runner without assets to work around Wrangler 4.92’s local Cron dispatch bug; production keeps its normal assets configuration. Each removes only its own temporary records. Never retarget them to a deployed site.
 
 `npm start` uses a separate ignored local config and fictional identities. `npm run deploy` builds and deploys the production configuration. GitHub Actions runs TypeScript checks, automated tests, and a production build; deployment requires the provider setup in the guide.
 

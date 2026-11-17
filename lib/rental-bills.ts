@@ -24,12 +24,13 @@ export type RentalBill = {
   id: string; connectionId: string; ownerId: string; renterId: string;
   month: string; periodStart: string; periodEnd: string; dueDate: string; amountCents: number; note: string;
   status: "issued" | "voided"; createdAt: string; createdDay: string;
+  source: "manual" | "scheduled";
   voidedAt: string | null; voidReason: string | null;
 };
 export type RentalBillWithBalance = RentalBill & BillBalances;
 export type RentalBillSummary = RentalBillWithBalance & { propertyName: string; unitName: string; ownerName: string; renterName: string | null };
 export type RentalBillEvent = { id: string; billId: string; actorId: string; actorName: string; action: string; reason: string; createdAt: string };
-export type RentalBillDetail = { bill: RentalBillWithBalance; connection: RentalConnection; events: RentalBillEvent[]; currentBillId: string | null; payments: RentalPaymentRecord[]; paymentPage: number; hasMorePayments: boolean };
+export type RentalBillDetail = { bill: RentalBillWithBalance; connection: RentalConnection; events: RentalBillEvent[]; currentBillId: string | null; defaultPaymentMethod: keyof typeof import("./rental-payments").paymentMethods; payments: RentalPaymentRecord[]; paymentPage: number; hasMorePayments: boolean };
 export type RentalBillsPage = { bills: RentalBillSummary[]; hasMore: boolean; month: string; totals: { count: number; amountCents: number; confirmedCents: number; remainingCents: number; pendingCents: number; pendingCount: number; past: number; today: number; upcoming: number } };
 
 export function billPeriodError(bill: Pick<CreateRentalBill, "periodStart" | "periodEnd">, connection: Pick<RentalConnection, "leaseStart" | "leaseEnd">): string | null {

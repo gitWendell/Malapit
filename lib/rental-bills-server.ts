@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { z } from "zod";
-import { rentalBillEvents, rentalBills, rentalConnections } from "../db/schema";
+import { rentalBillEvents, rentalBills, rentalConnections, rentalPayments } from "../db/schema";
 import type { AuthIdentity } from "./auth";
 import { getDb, HttpError } from "./server";
 import { philippinesDay } from "./rentals";
@@ -29,14 +29,15 @@ export async function rentalBillsFor(url: URL, user: AuthIdentity): Promise<Rent
 
 export async function rentalBillFor(id: string, user: AuthIdentity, paymentPage = 0) {
   const bill = await accessibleBill(id, user), db = getDb();
-  const [connections, events, current, history] = await Promise.all([
+  const [connections, events, current, history, methods] = await Promise.all([
     db.select().from(rentalConnections).where(eq(rentalConnections.id, bill.connectionId)).limit(1),
     db.select().from(rentalBillEvents).where(eq(rentalBillEvents.billId, id)).orderBy(asc(rentalBillEvents.createdAt)),
     db.select({ id: rentalBills.id }).from(rentalBills).where(and(eq(rentalBills.connectionId, bill.connectionId), eq(rentalBills.month, bill.month), eq(rentalBills.status, "issued"))).limit(1),
     paymentHistoryForBill(id, paymentPage, bill.ownerId === user.userId),
+    db.select({ method: rentalPayments.method }).from(rentalPayments).innerJoin(rentalBills, eq(rentalBills.id, rentalPayments.billId)).where(and(eq(rentalBills.connectionId, bill.connectionId), eq(rentalPayments.status, "confirmed"))).orderBy(desc(rentalPayments.createdAt), asc(rentalPayments.id)).limit(1),
   ]);
   if (!connections.length) throw unavailable();
-  return { bill, connection: connections[0], events, currentBillId: current[0]?.id || null, ...history };
+  return { bill, connection: connections[0], events, currentBillId: current[0]?.id || null, defaultPaymentMethod: methods[0]?.method || "gcash", ...history };
 }
 
 export async function createRentalBill(input: unknown, user: AuthIdentity) {

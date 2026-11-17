@@ -3,8 +3,14 @@ import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 import { createRequestAuth, safeReturnPath } from "../lib/auth";
 import { runWithIdentity } from "../lib/auth-context";
+import { runScheduledRentBills } from "../lib/rental-billing-jobs";
 
 const worker = {
+  async scheduled(controller: ScheduledController, env: Cloudflare.Env) {
+    if (!env.DB) throw new Error("The billing database is unavailable.");
+    const result = await runScheduledRentBills(env.DB, new Date(controller.scheduledTime));
+    console.log("Malapit automatic billing", JSON.stringify(result));
+  },
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
     const url = new URL(request.url);
     let auth;

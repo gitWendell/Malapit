@@ -36,6 +36,20 @@
       "when": 1794897421103,
       "tag": "0004_odd_quasar",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794910928003,
+      "tag": "0005_bouncy_satana",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794911373986,
+      "tag": "0006_automatic_billing_rules",
+      "breakpoints": true
     }
   ]
 }

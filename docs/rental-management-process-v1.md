@@ -15,7 +15,7 @@ The first version supports one owner/manager account and one renter account per 
 
 ## Monthly bill release — November 17
 
-- The owner creates each month's rent bill inside an accepted, open connection. Nothing is generated or charged automatically.
+- The owner creates each month's rent bill inside an accepted, open connection, or opts into the calendar-month schedule described below. Nothing is charged automatically.
 - The billing month identifies the month in which the covered period starts. Default dates use the calendar month, clipped to the agreed rental dates. Owners can change the coverage for their agreed cycle, such as November 17–December 16, up to 31 days. A partial first/last month starts with an empty amount so the owner enters the agreed charge; no prorating rule is assumed.
 - The due date starts with the agreed due day, using the last day in shorter months, and can be reviewed and changed before sharing. Money is stored as integer cents. Only rent is recorded in this release.
 - One current bill is allowed per connection and billing month. Current covered periods cannot overlap, including across month boundaries. Concurrent/repeated requests cannot silently create duplicate bills.
@@ -33,11 +33,20 @@ The first version supports one owner/manager account and one renter account per 
 - Limits are 20,000 historical payment entries across the test and 30 creations per person per Philippine day. Rejected, cancelled and reversed records still count. History is paged 20 entries at a time. Listing reviewers have no bypass; access stays with the bill's original owner and renter, including after a connection closes.
 - The public `/guide` page includes an animated phone walkthrough with 12 chapters, moving cursor paths, clicks, visible typing, English synthetic narration, captions and a transcript. All demonstrated accounts, addresses and amounts are fictional and were created only in local development.
 
+## Workload reduction — November 17
+
+- Monthly bills are off by default. In an accepted connection, the owner reviews the fixed rent, first covered period and due date, then opts into future full calendar months. A due day beyond a shorter month's last day uses that last day. Partial months and custom cycles stay manual.
+- A job checks up to 12 due schedules every five minutes. Bill creation and schedule advancement share a database transaction, preventing duplicates during concurrent runs. An existing current bill is preserved. Automatically created history names Malapit as the actor.
+- A missed month, overlap, limit, failed creation, cancelled automatic bill or partial month pauses for review. Owners can pause future bills. Closing the connection stops its schedule; a new renter needs a new connection and new consent. There is no silent backbilling or payment deduction.
+- Owners review reports across their own units in one private list, with the existing receipt check, duplicate-reference explanation and correction history. Renters see unpaid bills across months. Private bill links still check the original account IDs.
+- The renter form suggests the remaining amount, current Philippine date and last confirmed method for that same rental. All can be changed, including for partial payments. A reference is always new, never copied. The owner checks original records before confirming.
+- Copy bill message prepares the current amount, due date and private link for the user to share. Malapit sends no Messenger, email or SMS message.
+
 ## Purpose and first scope
 
 Help owners manage existing rentals and help renters keep track of their own rent and concerns. Owners may add an existing tenant even when that person found the property elsewhere. Map listings and private rental-management records are separate: adding a unit or tenant does not publish a listing.
 
-The management workflow includes units, accepted owner–renter connections, agreed rent and due dates, monthly bills, manual payment records, owner confirmation and an activity history. Repair requests are the next planned stage. Due-date reminders are visible inside the app. Email, SMS, push notifications, automatic monthly generation, money collection, automatic deductions, electronic signatures and paid management plans require later work.
+The management workflow includes units, accepted owner–renter connections, agreed rent and due dates, optional monthly bill creation, manual payment records, owner confirmation and an activity history. Repair requests are the next planned stage. Due-date reminders are visible inside the app. Email, SMS, push notifications, money collection, automatic deductions, electronic signatures and paid management plans require later work.
 
 ## People and access
 

@@ -16,6 +16,9 @@ The November 17 release adds monthly rent bills using the same services. Apply `
 
 The next November 17 release adds owner-confirmed payment records. Apply `0004_odd_quasar.sql` before its matching Worker. It adds `rental_payments` and `rental_payment_events`, with atomic balance, role, transition, reference-review and history checks. No payment provider, proof upload, storage subscription or scheduled job is added. The `/guide` walkthrough is a static MP4 with captions and a transcript, using fictional local data.
 
+The workload update adds optional full-calendar-month bills and private action lists. Apply `0005_bouncy_satana.sql` and `0006_automatic_billing_rules.sql` before publishing its Worker. They add schedule records, bill source, immutable consent/history rules and a pending-payment index. Existing connections remain opted out. The same Worker gains the `*/5 * * * *` Cron trigger; no new service, subscription, secret or storage bucket is added.
+
+
 ## 1. Prepare Cloudflare
 
 ```sh
@@ -117,11 +120,19 @@ My Rentals has separate database limits: 100 active units across the test, 30 pe
 
 Rental data is returned with private, no-store responses. No public route, listing review role, or guessable invite link grants access. There is no email/SMS delivery, payment collection, lease signing or automatic deletion in this release. Balances use owner-confirmed records and do not independently verify an external transfer.
 
-Rent bills allow 10,000 historical records across the test and 60 creations per owner per Philippine day. Cancelled bills still count. Only accepted open connections can receive new bills. A correction retains the original and the owner's reason; bill totals exclude cancelled records. Due-date labels are not payment confirmation. Bills are created manually; no monthly scheduler or automatic charge is configured.
+Rent bills allow 10,000 historical records across the test and 60 creations per owner per Philippine day. Cancelled bills still count. Only accepted open connections can receive new bills. A correction retains the original and the owner's reason; bill totals exclude cancelled records. Due-date labels are not payment confirmation. Owners can still create bills manually. The optional schedule starts only after an owner reviews and enables future full calendar months on that connection. Partial periods stay manual. Closing the connection stops it, and cancelling an automatic bill pauses future creation. Missed months and errors need review. No automatic charge is configured.
 
 Payments allow 20,000 historical records and 30 creations per person per Philippine day, including cancelled/rejected/reversed entries. One pending report per bill is allowed. Pending reports do not reduce the remaining balance. Confirmation and owner-recorded receipts atomically recheck the remaining amount. A repeated confirmed reference for that owner and method needs a manual explanation; this is a review flag, not a fraud finding, and only the owner receives the cross-bill flag. Amounts, parties and original details cannot be edited. Cancellation, correction requests and reversals need reasons. A bill with a pending or confirmed payment cannot be cancelled. Closing a connection preserves payment settlement on already-issued bills for the original parties. No proof-photo bucket or new secret is required.
 
-For a privacy request, verify the requester’s account and identify their owned units, connections, bills, payment records and history in `rental_units`, `rental_connections`, `rental_events`, `rental_bills`, `rental_bill_events`, `rental_payments` and `rental_payment_events`. A shared record can also contain another party’s information. Review the minimum data needed, explain any reason for retention, and provide a requester-scoped copy or approved removal/de-identification through the manual support process. There is no in-app support access or automatic deletion job. Do not use listing-review privileges as permission to inspect private rental data. Keep support exports and any database work outside the public repository.
+For a privacy request, verify the requester’s account and identify their owned units, connections, bills, payment records and history in `rental_units`, `rental_connections`, `rental_events`, `rental_bills`, `rental_bill_events`, `rental_payments`, `rental_payment_events` and `rental_bill_schedules`. A shared record can also contain another party’s information. Review the minimum data needed, explain any reason for retention, and provide a requester-scoped copy or approved removal/de-identification through the manual support process. There is no in-app support access or automatic deletion job. Do not use listing-review privileges as permission to inspect private rental data. Keep support exports and any database work outside the public repository.
+
+## Automatic bill operations
+
+The Worker checks due schedules every five minutes. Each run reads at most 12, with at most 49 D1 statements even if all creations fail, below the Free plan's 50 queries per invocation. Successful creation and schedule advancement are atomic. At the test's 100-active-unit limit, a normal month-start backlog needs up to nine runs. Check the Cloudflare Cron event outcomes and D1 quotas if bills are missing; free quotas or CPU limits can interrupt the job. A later run does not silently create bills for a missed month. Cron configuration changes may take up to 15 minutes to propagate.
+
+Use the local workload smoke test to exercise the actual built scheduled handler with fictional data. Its separate runner omits assets only to avoid the installed Wrangler version's local Cron dispatch bug. Do not add a public scheduler URL or invoke local test endpoints on production. Deployed Cron invokes the scheduled handler directly. Logs contain aggregate counts only, without renter details.
+
+The owner review queue and renter due list return private, no-store responses scoped to the original account. A bill link requires sign-in and does not grant access by itself. The quick form reuses only a confirmed method from that connection, never a reference. Copied messages are shared manually.
 
 ## Provider limits
 
@@ -130,6 +141,8 @@ Checked November 12, 2026:
 - Workers Free: 100,000 requests/day, 10 ms CPU/request. A successful local build does not prove deployed requests fit that CPU budget.
 - D1 Free: 5 million rows read/day, 100,000 rows written/day, and 5 GB total storage. Requests fail when free quotas are exhausted.
 - Supabase Free: 50,000 monthly active users, 500 MB database, 1 GB file storage, 5 GB egress, and 5 GB cached egress. Free projects may pause after one week of inactivity. Free quota restrictions can interrupt the pilot.
+
+Scheduler references: [Cron triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/), [D1 limits](https://developers.cloudflare.com/d1/platform/limits/), [D1 transactions](https://developers.cloudflare.com/d1/worker-api/d1-database/), and [local assets/Cron issue](https://github.com/cloudflare/workers-sdk/issues/9882).
 
 Sources: [Workers limits](https://developers.cloudflare.com/workers/platform/limits/), [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/), [Supabase pricing](https://supabase.com/pricing), [Supabase billing FAQ](https://supabase.com/docs/guides/platform/billing-faq).
 

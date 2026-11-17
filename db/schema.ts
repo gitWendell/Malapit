@@ -52,6 +52,7 @@ export const rentalBills = sqliteTable("rental_bills", {
   month: text("month").notNull(), periodStart: text("period_start").notNull(), periodEnd: text("period_end").notNull(), dueDate: text("due_date").notNull(),
   amountCents: integer("amount_cents").notNull(), note: text("note").notNull().default(""), status: text("status").notNull().default("issued"),
   createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(), voidedAt: text("voided_at"), voidReason: text("void_reason"),
+  source: text("source").notNull().default("manual"),
 }, table => [
   uniqueIndex("rental_bill_live_month").on(table.connectionId, table.month).where(sql`${table.status} = 'issued'`),
   index("rental_bills_owner_month").on(table.ownerId, table.month, table.dueDate), index("rental_bills_renter_month").on(table.renterId, table.month, table.dueDate),
@@ -75,6 +76,7 @@ export const rentalPayments = sqliteTable("rental_payments", {
   uniqueIndex("rental_payment_pending_bill").on(table.billId).where(sql`${table.status} = 'pending'`),
   index("rental_payments_bill_status").on(table.billId, table.status), index("rental_payments_bill_created").on(table.billId, table.createdAt),
   index("rental_payments_reference").on(table.ownerId, table.method, table.referenceKey, table.status), index("rental_payments_daily").on(table.submittedBy, table.createdDay),
+  index("rental_payments_owner_status").on(table.ownerId, table.status, table.createdAt),
   check("rental_payment_amount", sql`${table.amountCents} BETWEEN 1 AND 100000000`),
   check("rental_payment_method", sql`${table.method} IN ('cash', 'gcash', 'maya', 'bank', 'other')`),
   check("rental_payment_status", sql`${table.status} IN ('pending', 'confirmed', 'rejected', 'cancelled', 'reversed')`),
@@ -83,3 +85,11 @@ export const rentalPaymentEvents = sqliteTable("rental_payment_events", {
   id: text("id").primaryKey(), paymentId: text("payment_id").notNull().references(() => rentalPayments.id), actorId: text("actor_id").notNull(), actorName: text("actor_name").notNull(),
   action: text("action").notNull(), reason: text("reason").notNull().default(""), createdAt: text("created_at").notNull(),
 }, table => [index("rental_payment_events_payment").on(table.paymentId, table.createdAt)]);
+
+export const rentalBillSchedules = sqliteTable("rental_bill_schedules", {
+  connectionId: text("connection_id").primaryKey().references(() => rentalConnections.id), ownerId: text("owner_id").notNull(),
+  status: text("status").notNull(), firstMonth: text("first_month").notNull(), nextMonth: text("next_month").notNull(),
+  issue: text("issue").notNull().default(""), version: integer("version").notNull().default(1),
+  createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(), updatedBy: text("updated_by").notNull(),
+  lastCheckedAt: text("last_checked_at"), lastBillId: text("last_bill_id").references(() => rentalBills.id),
+}, table => [index("rental_bill_schedules_due").on(table.status, table.nextMonth), index("rental_bill_schedules_owner").on(table.ownerId, table.status), check("rental_schedule_status", sql`${table.status} IN ('enabled','paused','attention','finished')`)]);

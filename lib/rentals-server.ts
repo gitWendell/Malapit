@@ -5,6 +5,7 @@ import { getDb, HttpError, routeError } from "./server";
 import type { AuthIdentity } from "./auth";
 import { effectiveRentalStatus, normalizeRentalEmail, philippinesDay, RENTAL_LIMITS, rentalConnectionAction, rentalCreateRequest, rentalInviteInput, rentalUnitAction, rentalUnitInput, type RentalConnection, type RentalsData } from "./rentals";
 import { billBalanceColumns } from "./rental-payment-queries";
+import { billingForConnection } from "./rental-billing-server";
 
 const unavailable = () => new HttpError(404, "This rental record is not available to this account.");
 function database() { if (!env.DB) throw new HttpError(503, "My Rentals is temporarily unavailable."); return env.DB; }
@@ -62,7 +63,7 @@ export async function rentalConnectionFor(id: string, user: AuthIdentity) {
     getDb().select().from(rentalEvents).where(eq(rentalEvents.connectionId, id)).orderBy(desc(rentalEvents.createdAt)).limit(30),
     getDb().select({ ...getTableColumns(rentalBills), ...billBalanceColumns }).from(rentalBills).where(and(eq(rentalBills.connectionId, id), or(eq(rentalBills.ownerId, user.userId), eq(rentalBills.renterId, user.userId)))).orderBy(desc(rentalBills.month), desc(rentalBills.createdAt)).limit(12),
   ]);
-  return { connection: connection(row), events, bills };
+  return { connection: connection(row), events, bills, billing: await billingForConnection(connection(row)) };
 }
 
 export async function createRentalUnit(input: unknown, user: AuthIdentity) {
@@ -145,6 +146,9 @@ export function rentalError(error: unknown): Response {
   let details = "";
   for (let cause = error, depth = 0; cause instanceof Error && depth < 5; depth++, cause = cause.cause) details += " " + cause.message;
   const rules: [string, number, string][] = [
+    ["RENTAL_SCHEDULE_STATE", 409, "This automatic billing setup changed. Refresh the rental and review its dates."],
+    ["RENTAL_SCHEDULE_CONNECTION", 409, "Automatic bills need an open accepted rental and a full calendar month within its agreed dates."],
+    ["RENTAL_SCHEDULE_FULL", 409, "Automatic billing has reached the testing limit. Please contact Malapit."],
     ["RENTAL_PAYMENTS_FULL", 409, "Payment records have reached the testing limit. Please contact Malapit."],
     ["RENTAL_PAYMENTS_DAILY", 429, "You can add up to 30 payment records per Philippine day. Please try again tomorrow."],
     ["RENTAL_PAYMENT_BILL", 409, "This bill changed or was cancelled. Refresh before recording a payment."],
