@@ -21,9 +21,12 @@ This standalone test uses **Cloudflare Workers Free + D1 Free**, with **Supabase
 - Renter payment reports, owner receipt confirmation, partial balances, cash records and dated corrections. Pending reports stay separate from confirmed amounts.
 - Optional monthly bill creation after owner review, with pause controls and manual handling for partial months.
 - A private owner review list across units, renter payment shortcuts, and copyable bill messages with private links.
+- An account-free [payment flow demo](https://malapit-test.malapit-ph.workers.dev/payment-demo) with a fictional reminder, checkout, confirmation and retry. It makes no charge or change to rental records.
 - A phone-friendly [video and written guide](https://malapit-test.malapit-ph.workers.dev/guide), using fictional local demonstration data and English narration.
 
 The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. My Rentals invitations and bills appear inside the app; Malapit does not email them. Owners can create bills manually or opt into full-calendar-month bills after reviewing the rent and dates. Owners check their own original records before confirming receipt. Malapit does not independently verify, collect, hold or transfer money. Repairs, payment-proof uploads, actual payment processing, paid promotions, email/SMS notifications, and automated ownership verification are not implemented.
+
+Online collection and phone push reminders remain a later stage. Provider onboarding and the owner-payout arrangement must be completed before live collection. Read [payment checkout readiness](docs/payment-checkout-readiness.md) for the provider-test and owner-payout requirements. The browser demo is separate from a real provider sandbox.
 
 ## Free pilot setup
 

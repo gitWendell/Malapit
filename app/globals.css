@@ -3,6 +3,7 @@
 @import "./rental-payments.css";
 @import "./rental-workload.css";
 @import "./guide.css";
+@import "./payment-demo.css";
 /* A warm, light home for Malapit. The same layout adapts to Android phones. */
 @font-face{font-family:Figtree;src:url('/fonts/figtree-variable.ttf') format('truetype');font-weight:300 900;font-style:normal;font-display:swap}
 .policy-shell{min-height:100dvh;background:var(--surface)}
