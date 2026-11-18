@@ -21,6 +21,7 @@ This standalone test uses **Cloudflare Workers Free + D1 Free**, with **Supabase
 - Renter payment reports, owner receipt confirmation, partial balances, cash records and dated corrections. Pending reports stay separate from confirmed amounts.
 - Optional monthly bill creation after owner review, with pause controls and manual handling for partial months.
 - A private owner review list across units, renter payment shortcuts, and copyable bill messages with private links.
+- Monthly owner reports in My Rentals → Reports, with per-unit balances, a unit filter and complete CSV downloads for the unit summary, bills and payment history. Totals use current records grouped by the bill's billing month; pending reports and cancelled bills are kept separate from confirmed credits.
 - An account-free [payment flow demo](https://malapit-test.malapit-ph.workers.dev/payment-demo) with a fictional reminder, checkout, confirmation and retry. It makes no charge or change to rental records.
 - A phone-friendly [video and written guide](https://malapit-test.malapit-ph.workers.dev/guide), using fictional local demonstration data and English narration.
 
@@ -28,7 +29,7 @@ The 18 sample homes are fictional and labeled. They are separate from submitted 
 
 Online collection and phone push reminders remain a later stage. Provider onboarding and the owner-payout arrangement must be completed before live collection. Read [payment checkout readiness](docs/payment-checkout-readiness.md) for the provider-test and owner-payout requirements. The browser demo is separate from a real provider sandbox.
 
-The [revenue proposal](docs/monetization-options.md) recommends optional owner management services and later featured listings. Its example prices are ideas to test, not active offers. Direct payment remains available; there are no Malapit subscriptions or transaction charges in the app.
+The [revenue proposal](docs/monetization-options.md) recommends optional owner management services and later featured listings. Monthly reports and downloads are now part of the free test. Its example prices are ideas to test, not active offers. Direct payment remains available; there are no Malapit subscriptions or transaction charges in the app.
 
 ## Free pilot setup
 
@@ -79,9 +80,10 @@ node scripts/rentals-smoke-test.mjs
 node scripts/rental-bills-smoke-test.mjs
 node scripts/rental-payments-smoke-test.mjs
 node scripts/rental-workload-smoke-test.mjs
+node scripts/rental-reports-smoke-test.mjs
 ```
 
-All five smoke tests are restricted to the built loopback Worker on port 5188. The original test checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. The rental test checks private unit ownership, intended-email invitations, concurrent responses, immutable shared details, expired/revoked invitations, past renter privacy, and archive/restore. The billing test checks scoped access, exact amounts, duplicate requests, overlapping dates, totals, concurrent cancellation and immutable correction history. The payment test checks reports, partial balances, owner confirmation, account isolation, repeated references, reversals and concurrent actions. The workload test checks schedules, the built scheduled handler, private review queues, payment defaults and replacement-renter privacy. It uses a temporary loopback runner without assets to work around Wrangler 4.92’s local Cron dispatch bug; production keeps its normal assets configuration. Each removes only its own temporary records. Never retarget them to a deployed site.
+All six smoke tests are restricted to the built loopback Worker on port 5188. The original test checks authorization, upload validation, private photos, listing review, location privacy, saved homes, inquiries, reports, availability expiry, and listing states. The rental test checks private unit ownership, intended-email invitations, concurrent responses, immutable shared details, expired/revoked invitations, past renter privacy, and archive/restore. The billing test checks scoped access, exact amounts, duplicate requests, overlapping dates, totals, concurrent cancellation and immutable correction history. The payment test checks reports, partial balances, owner confirmation, account isolation, repeated references, reversals and concurrent actions. The workload test checks schedules, the built scheduled handler, private review queues, payment defaults and replacement-renter privacy. It uses a temporary loopback runner without assets to work around Wrangler 4.92’s local Cron dispatch bug; production keeps its normal assets configuration. The report test checks owner-only summaries, exact balances, unit filters, pagination, complete CSV downloads and correction history. Each removes only its own temporary records. Never retarget them to a deployed site.
 
 `npm start` uses a separate ignored local config and fictional identities. `npm run deploy` builds and deploys the production configuration. GitHub Actions runs TypeScript checks, automated tests, and a production build; deployment requires the provider setup in the guide.
 
@@ -92,7 +94,7 @@ The [rental-management process](docs/rental-management-process-v1.md) describes 
 - `app/`, `components/`, `lib/`: interface, shared rules, and server routes.
 - `db/`, `drizzle/`: D1 schema and append-only migrations.
 - `worker/`, `wrangler.jsonc`: Cloudflare entry point and bindings.
-- `docs/`: business process, research, and deployment guide.
+- `docs/`: business process, research, deployment guide, and [owner-report details](docs/owner-reports.md).
 - `public/tutorial/`: a 14-section animated MP4, captions, chapter index, poster and transcript from fictional local app screens. It includes moving cursor paths, click effects, visible typing, transitions and local Kokoro narration. The guide has chapter jump buttons. See [walkthrough production](docs/walkthrough-production.md) for the script and build steps. No paid recording service or speech API is used.
 
 Keep credentials in Cloudflare runtime secrets or ignored local environment files. Do not commit tokens, `.dev.vars`, database files, uploads, or build output. `.openai/hosting.json` has no original Site identity and is retained for the build integration.

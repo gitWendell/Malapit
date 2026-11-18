@@ -6,7 +6,7 @@ November 18, 2026. Recommendation for review; no prices, subscriptions, advertis
 
 Keep renter search, basic listings and the direct-to-owner payment option free. Make the first paid offer an optional management plan for owners with several units. Its value should come from saving administrative work even when an owner receives rent outside Malapit. A charge on online checkout alone would earn nothing from direct payments and depends on provider approval and actual usage.
 
-Start with one proposed price to test: **PHP 199 per owner per month, covering up to 10 private units**. This is a hypothesis, not a researched Philippine market price or an approved commercial offer. Candidate additions are useful monthly reports, downloadable records and carefully scoped staff access. These additions are not implemented. Deliver the promised value and agree plan, support, cancellation and billing terms before selling it. Do not remove current free-test features or silently reduce existing limits.
+Start with one proposed price to test: **PHP 199 per owner per month, covering up to 10 private units**. This is a hypothesis, not a researched Philippine market price or an approved commercial offer. Monthly owner reports and CSV downloads have now been added to the free test so their usefulness can be assessed. Carefully scoped staff access remains a possible later addition. A future paid offer needs additional agreed value; adding reports to the free test does not authorize charging for them. Agree plan, support, cancellation and billing terms before selling anything. Do not remove current free-test features or silently reduce existing limits.
 
 Ten paying owners at PHP 199 would produce **PHP 1,990 monthly gross revenue**. Subtract hosting, storage and delivery, payment collection costs, taxes, refunds and support time to assess profit. Ten owners with ten units each already use the present 100-unit test capacity; more customers or larger portfolios require a capacity and cost review. This small example is a validation target, not a full-income forecast.
 
@@ -26,4 +26,4 @@ An online payment convenience or platform fee is a later option only after an ap
 
 ## Next product decision
 
-Prepare a simple monthly owner report and downloadable bill/payment history as candidates for the optional management plan. Test usefulness in the free release, then decide whether owners will pay the proposed price. Do not build subscription checkout or publish pricing until the offer, operating requirements and delivery costs are ready.
+Test the monthly owner report and downloadable bill/payment history in the free release with a few owners over a rent cycle. Use what actually saves work to define a future optional management plan. Do not build subscription checkout or publish pricing until the offer, operating requirements and delivery costs are ready.

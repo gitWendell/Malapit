@@ -160,3 +160,7 @@ Accepted rental records, permissions, monthly rent bills and payment submissions
 - [PayMongo linked accounts and onboarding requirements](https://docs.paymongo.com/docs/account-settings-linked-accounts)
 - [PayMongo published pricing](https://www.paymongo.com/en/pricing)
 - [Xendit Philippines subscription activation and payment methods](https://help.xendit.co/hc/en-us/articles/4408498827545--PH-How-to-activate-subscription-payments-for-my-business)
+
+## Monthly owner reports — available in the free test
+
+Owners open My Rentals → Reports and choose a billing month. The report shows billed rent, current owner-confirmed credits, remaining balances and pending reports across all pages. Each unit has a breakdown and an optional unit filter. CSV downloads cover the unit summary, original bill records and complete payment record history for the selected month and unit scope. Current totals exclude cancelled bills and reversed/rejected/cancelled payment credits, while downloads preserve their original amounts, statuses and correction reasons. All views and downloads are limited to the original owner account; listing reviewer access and renter access do not grant portfolio reporting. Read [owner reports](owner-reports.md) for definitions and limits. These reports and downloads remain free; no subscription or payment fee was added.

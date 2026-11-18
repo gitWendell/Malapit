@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, ArrowRight, CalendarDays, Check, Copy, House, KeyRound, LoaderCircle, Mail, Pencil, Plus, RefreshCw, ShieldCheck, Users } from "lucide-react";
+import { Archive, ArrowRight, CalendarDays, Check, Copy, FileChartColumn, House, KeyRound, LoaderCircle, Mail, Pencil, Plus, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import type { Session } from "../lib/types";
 import { api, today } from "../lib/client";
 import { effectiveRentalStatus, pesoInputToCents, rentalDate, rentalMoney, rentalStatusLabel, rentalUnitInput, type RentalConnection, type RentalEvent, type RentalsData, type RentalUnit } from "../lib/rentals";
@@ -12,6 +12,7 @@ import type { RentalBilling } from "../lib/rental-billing";
 import { AutomaticBills } from "./rental-billing";
 import { RentalTasks } from "./rental-workload";
 import { PaymentForm } from "./rental-payments";
+import { OwnerReports } from "./rental-reports";
 
 type UnitTerms = Omit<RentalUnit, "id" | "ownerId" | "createdAt" | "updatedAt" | "archivedAt">;
 type Detail = { connection: RentalConnection; events: RentalEvent[]; bills: RentalBillWithBalance[]; billing: RentalBilling };
@@ -20,10 +21,18 @@ const message = (error: unknown) => error instanceof Error ? error.message : "Pl
 
 export default function MyRentals({ session, local, onSignIn, notify }: { session: Session; local: boolean; onSignIn: () => void; notify: (text: string, error?: boolean) => void }) {
   const [data, setData] = useState<RentalsData | null>(null), [loadedFor, setLoadedFor] = useState(""), [error, setError] = useState("");
-  const [tab, setTab] = useState<"units" | "renting">("units"), [archived, setArchived] = useState(false), [busy, setBusy] = useState(false), [dialog, setDialog] = useState<Dialog | null>(null);
+  const [tab, setTab] = useState<"units" | "renting" | "reports">("units"), [archived, setArchived] = useState(false), [busy, setBusy] = useState(false), [dialog, setDialog] = useState<Dialog | null>(null);
   const [billRefreshKey, setBillRefreshKey] = useState(0);
   const [hideLocalControls, setHideLocalControls] = useState(false);
   const sequence = useRef(0), detailSequence = useRef(0), id = session?.userId;
+  function selectTab(next: "units" | "renting" | "reports") {
+    setTab(next);
+    const url = new URL(window.location.href);
+    if (next === "reports") url.searchParams.set("rentalTab", "reports");
+    else url.searchParams.delete("rentalTab");
+    url.searchParams.delete("invite"); url.searchParams.delete("bill");
+    window.history.replaceState(null, "", url);
+  }
   const refresh = useCallback(async () => {
     const request = ++sequence.current;
     const result = await api<RentalsData>("/api/rentals", undefined, "GET");
@@ -40,7 +49,7 @@ export default function MyRentals({ session, local, onSignIn, notify }: { sessio
   const showBill = useCallback(async (billId: string, paymentPage = 0, quick = false) => {
     const request = ++detailSequence.current;
     setBusy(true);
-    try { const detail = await api<RentalBillDetail>("/api/rentals/bills/" + billId + "?paymentPage=" + paymentPage, undefined, "GET"); if (request === detailSequence.current) { setTab(detail.bill.ownerId === id ? "units" : "renting"); setDialog({ kind: quick && detail.bill.renterId === id && detail.bill.status === "issued" && detail.bill.remainingCents > 0 && !detail.bill.pendingCount ? "payment" : "bill", detail }); } }
+    try { const detail = await api<RentalBillDetail>("/api/rentals/bills/" + billId + "?paymentPage=" + paymentPage, undefined, "GET"); if (request === detailSequence.current) { setTab(previous => detail.bill.ownerId === id ? previous === "reports" ? "reports" : "units" : "renting"); setDialog({ kind: quick && detail.bill.renterId === id && detail.bill.status === "issued" && detail.bill.remainingCents > 0 && !detail.bill.pendingCount ? "payment" : "bill", detail }); } }
     catch (cause) { if (request === detailSequence.current) notify(message(cause), true); }
     finally { if (request === detailSequence.current) setBusy(false); }
   }, [notify, id]);
@@ -53,6 +62,7 @@ export default function MyRentals({ session, local, onSignIn, notify }: { sessio
       const billId = new URLSearchParams(window.location.search).get("bill");
       if (invitationId) { setTab("renting"); void showConnection(invitationId); }
       else if (billId) void showBill(billId);
+      else if (new URLSearchParams(window.location.search).get("rentalTab") === "reports") setTab("reports");
       else if (!result.units.length && result.myConnections.length) setTab("renting");
     }).catch(cause => { if (!cancelled) setError(message(cause)); });
     return () => { cancelled = true; sequence.current++; detailSequence.current++; };
@@ -90,9 +100,9 @@ export default function MyRentals({ session, local, onSignIn, notify }: { sessio
     <div className="workspace-title"><div><p className="eyebrow"><KeyRound size={15} />Your private space</p><h1>My Rentals</h1><p>Manage units and connect with the people renting them.</p></div><button className="button primary" disabled={busy} onClick={() => setDialog({ kind: "unit" })}><Plus size={17} />Add a unit</button></div>
     {local && !hideLocalControls && <aside className="rental-local-tools"><strong>Local test accounts</strong><a href="/auth/signin?return_to=/?view=rentals">Owner</a><a href="/auth/signin?test_as=renter&return_to=/?view=rentals">Renter</a><a href="/auth/signin?test_as=other&return_to=/?view=rentals">Other user</a><span>Renter email: local_renter@sites.test</span><button className="text-button" onClick={() => setHideLocalControls(true)}>Hide test controls</button></aside>}
     {local && hideLocalControls && <p className="rental-demo-note">Demonstration · fictional data · no money transferred</p>}
-    <div className="rental-toolbar"><div className="rental-tabs" role="group" aria-label="My Rentals view"><button className={tab === "units" ? "selected" : ""} aria-pressed={tab === "units"} onClick={() => setTab("units")}><House size={16} />My units{current && <span>{current.units.filter(unit => !unit.archivedAt).length}</span>}</button><button className={tab === "renting" ? "selected" : ""} aria-pressed={tab === "renting"} onClick={() => setTab("renting")}><Users size={16} />I’m renting{incoming.length > 0 && <span>{incoming.length} to check</span>}</button></div><button className="button secondary rental-refresh" disabled={busy} onClick={() => void refresh().catch(cause => setError(message(cause)))} aria-label="Refresh My Rentals"><RefreshCw size={16} /><span>Refresh</span></button></div>
+    <div className="rental-toolbar"><div className="rental-tabs" role="group" aria-label="My Rentals view"><button className={tab === "units" ? "selected" : ""} aria-pressed={tab === "units"} onClick={() => selectTab("units")}><House size={16} />My units{current && <span>{current.units.filter(unit => !unit.archivedAt).length}</span>}</button><button className={tab === "renting" ? "selected" : ""} aria-pressed={tab === "renting"} onClick={() => selectTab("renting")}><Users size={16} />I’m renting{incoming.length > 0 && <span>{incoming.length} to check</span>}</button><button className={tab === "reports" ? "selected" : ""} aria-pressed={tab === "reports"} onClick={() => selectTab("reports")}><FileChartColumn size={16} />Reports</button></div><button className="button secondary rental-refresh" disabled={busy} onClick={() => void refresh().catch(cause => setError(message(cause)))} aria-label="Refresh My Rentals"><RefreshCw size={16} /><span>Refresh</span></button></div>
     {error && <div className="rental-load-error" role="alert"><p>{error}</p><button className="text-link" onClick={() => void refresh().catch(cause => setError(message(cause)))}>Try again</button>{error.includes("Sign in") && <button className="text-link" onClick={onSignIn}>Sign in again</button>}</div>}
-    {current && <RentalTasks key={"tasks:" + id + ":" + tab} role={tab === "units" ? "owner" : "renter"} refreshKey={billRefreshKey} busy={busy} openBill={billId => void showBill(billId)} report={billId => void showBill(billId, 0, true)} openRental={connectionId => void showConnection(connectionId)} review={async (paymentId, action) => { await mutate("/api/rentals/payments/" + paymentId, action, "PATCH", action.action === "confirm" ? "Receipt confirmed. The renter’s balance is updated." : "Correction requested. The original report stays in the history."); }} />}
+    {current && tab !== "reports" && <RentalTasks key={"tasks:" + id + ":" + tab} role={tab === "units" ? "owner" : "renter"} refreshKey={billRefreshKey} busy={busy} openBill={billId => void showBill(billId)} report={billId => void showBill(billId, 0, true)} openRental={connectionId => void showConnection(connectionId)} review={async (paymentId, action) => { await mutate("/api/rentals/payments/" + paymentId, action, "PATCH", action.action === "confirm" ? "Receipt confirmed. The renter’s balance is updated." : "Correction requested. The original report stays in the history."); }} />}
     {!current && !error ? <div className="loading-inline"><LoaderCircle className="spin" />Loading your rentals…</div> : current && tab === "units" ? <>
       <div className="stat-grid rental-stats"><div><span>Active units</span><strong>{current.units.filter(unit => !unit.archivedAt).length}</strong></div><div><span>Connected rentals</span><strong>{active.length}</strong></div><div><span>Invitations to accept</span><strong>{waiting.length}</strong></div></div>
       <div className="rental-section-heading"><h2>{archived ? "Archived units" : "Your units"}</h2><label className="rental-archive-toggle"><input type="checkbox" checked={archived} onChange={event => setArchived(event.target.checked)} />Show archived</label></div>
@@ -106,13 +116,14 @@ export default function MyRentals({ session, local, onSignIn, notify }: { sessio
           {history.length > 0 && <details className="rental-history"><summary>Connection history ({history.length})</summary>{history.map(item => <button key={item.id} disabled={busy} onClick={() => void showConnection(item.id)}><span>{item.renterName || item.inviteEmail}<small>{rentalDate(item.createdAt)}</small></span><span>{rentalStatusLabel(effectiveRentalStatus(item))}</span></button>)}</details>}
         </article>;
       })}</div> : <Empty title={archived ? "No archived units" : "Start with a place you manage"} description={archived ? "Units you archive will appear here." : "Add your unit or room, set the agreed rent, and invite an existing renter. Adding a private unit does not advertise it on the map."} action={!archived && <button className="button primary" onClick={() => setDialog({ kind: "unit" })}><Plus size={16} />Add your first unit</button>} />}
-    </> : current ? <>
+    </> : current && tab === "renting" ? <>
       {incoming.length > 0 && <section className="rental-incoming"><div className="rental-section-heading"><h2>Invitations to check</h2><span>{incoming.length}</span></div><div className="rental-unit-grid">{incoming.map(item => <ConnectionCard key={item.id} item={item} busy={busy} open={() => void showConnection(item.id)} />)}</div></section>}
       <div className="rental-section-heading"><h2>Your connected rentals</h2></div>
       {connected.length ? <div className="rental-unit-grid">{connected.map(item => <ConnectionCard key={item.id} item={item} busy={busy} open={() => void showConnection(item.id)} />)}</div> : <Empty title={incoming.length ? "Check the invitation above" : "Your rental connection starts here"} description={incoming.length ? "Review the owner, unit and rental details before accepting." : "Ask your owner to invite the email you use to sign in to Malapit. Their invitation will appear here."} />}
       {past.length > 0 && <details className="rental-past"><summary>Past connections and responses ({past.length})</summary><div className="rental-unit-grid">{past.map(item => <ConnectionCard key={item.id} item={item} busy={busy} open={() => void showConnection(item.id)} />)}</div></details>}
     </> : null}
-    {current && <BillOverview key={id + ":" + tab} role={tab === "units" ? "owner" : "renter"} refreshKey={billRefreshKey} busy={busy} open={billId => void showBill(billId)} />}
+    {current && tab === "reports" && <OwnerReports key={id} refreshKey={billRefreshKey} busy={busy} openUnits={() => selectTab("units")} />}
+    {current && tab !== "reports" && <BillOverview key={id + ":" + tab} role={tab === "units" ? "owner" : "renter"} refreshKey={billRefreshKey} busy={busy} open={billId => void showBill(billId)} />}
     <p className="rental-private-note"><ShieldCheck size={15} />Rental records are private to their owner and connected renter. Payments are arranged directly between you.</p>
     {dialog && current && <Modal title={dialog.kind === "unit" ? dialog.unit ? "Edit unit" : "Add a private unit" : dialog.kind === "invite" ? "Invite your renter" : dialog.kind === "bill-form" ? "Create rent bill" : dialog.kind === "payment" ? "Report a payment" : dialog.kind === "bill" ? "Rent bill" : "Rental connection"} wide={dialog.kind === "unit" || dialog.kind === "bill-form"} className="rental-dialog" onClose={() => { if (!busy) setDialog(null); }}>
       {dialog.kind === "unit" ? <UnitForm key={dialog.unit?.id || "new"} initial={dialog.unit} busy={busy} onSave={async terms => { if (dialog.unit) await mutate("/api/rentals/units/" + dialog.unit.id, { action: "update", version: dialog.unit.updatedAt, data: terms }, "PATCH", "Unit details updated."); else await mutate("/api/rentals/units", terms, "POST", "Your private unit is ready. You can invite your renter."); setDialog(null); }} />
