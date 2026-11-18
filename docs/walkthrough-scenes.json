@@ -42,25 +42,32 @@
     "narration": "Back with the owner, create a monthly rent bill. Check the covered dates, amount and due date. Both people can see this bill."
   },
   {
+    "id": "autobill",
+    "title": "Set up future bills once",
+    "role": "Owner",
+    "caption": "Optional: review the first full month. This creates bills, not payment deductions.",
+    "narration": "For an agreed calendar month cycle, you can turn on monthly bills. Review the first full month and rent before enabling. Pause them whenever you need. This does not deduct money."
+  },
+  {
     "id": "report",
-    "title": "Paid the owner? Record it here.",
+    "title": "Direct payment stays an option",
     "role": "Renter",
-    "caption": "Enter the amount, method, date and transaction reference.",
-    "narration": "Paid the owner directly? Report it here. Let's enter three thousand pesos, choose G Cash, and add the transaction reference. Then send the report."
+    "caption": "Pay the owner using your agreed method. Then report it in Malapit.",
+    "narration": "You can still pay the owner directly by bank, wallet, or cash. After paying, choose Report a payment. Check the filled in details, change any partial amount, and add a new reference."
   },
   {
     "id": "pending",
-    "title": "A report still needs checking",
+    "title": "Reported is not yet confirmed",
     "role": "Renter",
-    "caption": "Awaiting confirmation. The balance stays at ₱8,000 for now.",
-    "narration": "Notice Awaiting confirmation? The balance is still eight thousand pesos. A report only reduces the balance after the owner checks and confirms it."
+    "caption": "The ₱3,000 report is pending. The recorded balance stays at ₱8,000.",
+    "narration": "Here is a three thousand peso report. While it is awaiting confirmation, the recorded balance stays at eight thousand."
   },
   {
     "id": "confirm",
-    "title": "Check it. Then confirm.",
+    "title": "One place to check payments",
     "role": "Owner",
-    "caption": "Check your original bank or wallet records before confirming receipt.",
-    "narration": "The owner checks the actual bank or wallet record, then confirms receipt. There we go. Three thousand confirmed, and five thousand left."
+    "caption": "Payments to check → compare your records → confirm receipt.",
+    "narration": "Owners now check reports in one list. Compare the amount and reference with your original records, then confirm receipt. Three thousand confirmed, and five thousand left."
   },
   {
     "id": "cash",
@@ -77,10 +84,17 @@
     "narration": "Open Payment history to see who reported and confirmed. Made a mistake? Use a correction and leave a reason. The original history stays."
   },
   {
+    "id": "checkout",
+    "title": "A look at online checkout",
+    "role": "Preview only",
+    "caption": "Preview only. No real charge, bank payout, notification or bill change.",
+    "narration": "Want to see the proposed online option? Open the payment demo. Tap the example reminder, choose a method, and try an approval. This is a fictional preview, not a connected payment service. No real payment or notification is sent."
+  },
+  {
     "id": "overview",
-    "title": "Both sides, on the same page",
+    "title": "Choose the way that works for you",
     "role": "My Rentals",
-    "caption": "Find a home. Track your bills. Keep your rent records together.",
-    "narration": "That's it. Find a rental, track your monthly bills, and keep both sides on the same page. Money is always paid directly to the owner."
+    "caption": "Direct payment is available. Online checkout and phone reminders are demo only.",
+    "narration": "Both people keep the same rent history. Direct payments remain available. Online checkout and phone reminders are still a demo. Nothing in this tutorial moves real money."
   }
 ]

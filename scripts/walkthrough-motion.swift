@@ -70,7 +70,7 @@ for (index,scene) in plan.scenes.enumerated() {
       cursor(here,pulse:step.click ? (local-clickAt)/0.38 : nil)
       text(String(format:"%02d",index+1)+"  /  "+String(format:"%02d",plan.scenes.count)+"   "+scene.title,17,rose,NSRect(x:34,y:137,width:652,height:29),bold:true)
       text(scene.caption,25,plum,NSRect(x:34,y:43,width:652,height:89))
-      text("FICTIONAL DEMO  ·  MONEY IS PAID DIRECTLY",12,muted,NSRect(x:34,y:15,width:652,height:22),bold:true)
+      text("FICTIONAL DATA  ·  NO REAL MONEY MOVED",12,muted,NSRect(x:34,y:15,width:652,height:22),bold:true)
       rose.withAlphaComponent(0.12).setFill();NSRect(x:0,y:0,width:w,height:4).fill();rose.setFill();NSRect(x:0,y:0,width:720*(elapsed+t)/total,height:4).fill()
       NSGraphicsContext.restoreGraphicsState()
       try pipe.fileHandleForWriting.write(contentsOf:Data(bytesNoCopy:pixels,count:w*h*4,deallocator:.none))

@@ -4,6 +4,8 @@ import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 import { createRequestAuth, safeReturnPath } from "../lib/auth";
 import { runWithIdentity } from "../lib/auth-context";
 import { runScheduledRentBills } from "../lib/rental-billing-jobs";
+import { serveTutorialVideo, TUTORIAL_VIDEO_PATH } from "../lib/tutorial-video";
+import tutorialMedia from "../public/tutorial/malapit-how-to-media.json";
 
 const worker = {
   async scheduled(controller: ScheduledController, env: Cloudflare.Env) {
@@ -13,6 +15,7 @@ const worker = {
   },
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
     const url = new URL(request.url);
+    if (url.pathname === TUTORIAL_VIDEO_PATH) return serveTutorialVideo(request, env.ASSETS, tutorialMedia.bytes);
     let auth;
     try { auth = createRequestAuth(request, env); }
     catch {

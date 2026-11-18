@@ -28,6 +28,8 @@ The 18 sample homes are fictional and labeled. They are separate from submitted 
 
 Online collection and phone push reminders remain a later stage. Provider onboarding and the owner-payout arrangement must be completed before live collection. Read [payment checkout readiness](docs/payment-checkout-readiness.md) for the provider-test and owner-payout requirements. The browser demo is separate from a real provider sandbox.
 
+The [revenue proposal](docs/monetization-options.md) recommends optional owner management services and later featured listings. Its example prices are ideas to test, not active offers. Direct payment remains available; there are no Malapit subscriptions or transaction charges in the app.
+
 ## Free pilot setup
 
 Follow [the deployment guide](docs/cloudflare-deployment.md) to configure Cloudflare, the separate Malapit Supabase Free project, Google sign-in, private storage, and runtime secrets. **R2 and Cloudflare Access are not required. Do not activate their billing subscriptions.**
@@ -91,7 +93,7 @@ The [rental-management process](docs/rental-management-process-v1.md) describes 
 - `db/`, `drizzle/`: D1 schema and append-only migrations.
 - `worker/`, `wrangler.jsonc`: Cloudflare entry point and bindings.
 - `docs/`: business process, research, and deployment guide.
-- `public/tutorial/`: animated MP4, captions, chapters, poster and transcript from fictional local app screens. It includes moving cursor paths, click effects, visible typing, transitions and local Kokoro narration. See [walkthrough production](docs/walkthrough-production.md) for the script and build steps. No paid recording service or speech API is used.
+- `public/tutorial/`: a 14-section animated MP4, captions, chapter index, poster and transcript from fictional local app screens. It includes moving cursor paths, click effects, visible typing, transitions and local Kokoro narration. The guide has chapter jump buttons. See [walkthrough production](docs/walkthrough-production.md) for the script and build steps. No paid recording service or speech API is used.
 
 Keep credentials in Cloudflare runtime secrets or ignored local environment files. Do not commit tokens, `.dev.vars`, database files, uploads, or build output. `.openai/hosting.json` has no original Site identity and is retained for the build integration.
 

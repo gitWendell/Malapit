@@ -1,5 +1,5 @@
 Malapit animated quick guide
-Fictional demonstration. Synthetic narration. Money is paid directly.
+Fictional demonstration. Synthetic narration. Direct payment is supported; online checkout and phone reminders are demo only. No real money is moved.
 
 Find your kind of place
 Looking for a place nearby? Start with the map. Tap a price, then open the home. Everything in this demo is fictional.
@@ -19,14 +19,17 @@ Here's the renter's side. Open the invitation, check the owner, rent and dates, 
 Create the monthly bill
 Back with the owner, create a monthly rent bill. Check the covered dates, amount and due date. Both people can see this bill.
 
-Paid the owner? Record it here.
-Paid the owner directly? Report it here. Let's enter three thousand pesos, choose G Cash, and add the transaction reference. Then send the report.
+Set up future bills once
+For an agreed calendar month cycle, you can turn on monthly bills. Review the first full month and rent before enabling. Pause them whenever you need. This does not deduct money.
 
-A report still needs checking
-Notice Awaiting confirmation? The balance is still eight thousand pesos. A report only reduces the balance after the owner checks and confirms it.
+Direct payment stays an option
+You can still pay the owner directly by bank, wallet, or cash. After paying, choose Report a payment. Check the filled in details, change any partial amount, and add a new reference.
 
-Check it. Then confirm.
-The owner checks the actual bank or wallet record, then confirms receipt. There we go. Three thousand confirmed, and five thousand left.
+Reported is not yet confirmed
+Here is a three thousand peso report. While it is awaiting confirmation, the recorded balance stays at eight thousand.
+
+One place to check payments
+Owners now check reports in one list. Compare the amount and reference with your original records, then confirm receipt. Three thousand confirmed, and five thousand left.
 
 Cash works too
 Already received the remaining five thousand in cash? Record it here and confirm you've received it. Now the bill is marked Paid.
@@ -34,5 +37,8 @@ Already received the remaining five thousand in cash? Record it here and confirm
 Keep the full story
 Open Payment history to see who reported and confirmed. Made a mistake? Use a correction and leave a reason. The original history stays.
 
-Both sides, on the same page
-That's it. Find a rental, track your monthly bills, and keep both sides on the same page. Money is always paid directly to the owner.
+A look at online checkout
+Want to see the proposed online option? Open the payment demo. Tap the example reminder, choose a method, and try an approval. This is a fictional preview, not a connected payment service. No real payment or notification is sent.
+
+Choose the way that works for you
+Both people keep the same rent history. Direct payments remain available. Online checkout and phone reminders are still a demo. Nothing in this tutorial moves real money.

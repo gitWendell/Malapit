@@ -1,5 +1,6 @@
 // Animate real CUA captures; narration is generated separately and stays local.
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {existsSync,mkdirSync,readFileSync,statSync,writeFileSync} from 'node:fs';
 import {resolve,sep} from 'node:path';
 const captures=resolve(process.argv[2]||''),work=resolve(process.argv[3]||'.sites-runtime/walkthrough-v2'),voices=resolve(process.argv[4]||'.sites-runtime/walkthrough-v2/voice'),limit=Number(process.argv[5]||0);
@@ -40,7 +41,10 @@ const video=resolve(out,'malapit-how-to.mp4');
 run('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',silent,'-i',voiceTrack,'-f','s16le','-ar',String(rate),'-ac','1','-i',clickTrack,'-filter_complex','[1:a]loudnorm=I=-17:TP=-1.5:LRA=9,aresample=48000[voice];[voice][2:a]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95:level=false[a]','-map','0:v','-map','[a]','-c:v','copy','-c:a','aac','-b:a','96k','-ar','48000','-t',String(elapsed),'-movflags','+faststart',video]);
 run('ffmpeg',['-hide_banner','-loglevel','error','-y','-ss','0.7','-i',video,'-frames:v','1','-q:v','3',resolve(out,'malapit-how-to-poster.jpg')]);
 writeFileSync(resolve(out,'malapit-how-to.vtt'),captions.join('\n'));writeFileSync(resolve(out,'malapit-how-to-chapters.vtt'),chapters.join('\n'));
-writeFileSync(resolve(out,'malapit-how-to-transcript.txt'),'Malapit animated quick guide\nFictional demonstration. Synthetic narration. Money is paid directly.\n\n'+script.map(s=>s.title+'\n'+s.narration).join('\n\n')+'\n');
+writeFileSync(resolve(out,'malapit-how-to-transcript.txt'),'Malapit animated quick guide\nFictional demonstration. Synthetic narration. Direct payment is supported; online checkout and phone reminders are demo only. No real money is moved.\n\n'+script.map(s=>s.title+'\n'+s.narration).join('\n\n')+'\n');
+let chapterStart=0;
+writeFileSync(resolve(out,'malapit-how-to-index.json'),JSON.stringify(scenes.map(scene=>{const item={id:scene.id,title:scene.title,role:scene.role,start:Number(chapterStart.toFixed(3)),end:Number((chapterStart+scene.duration).toFixed(3))};chapterStart+=scene.duration;return item;}),null,2)+'\n');
+writeFileSync(resolve(out,'malapit-how-to-media.json'),JSON.stringify({bytes:statSync(video).size,seconds:seconds(video),sha256:createHash('sha256').update(readFileSync(video)).digest('hex')},null,2)+'\n');
 if(statSync(video).size>20*1024*1024)throw new Error('Compress the tutorial below 20 MiB before publication.');
 run('ffmpeg',['-hide_banner','-loglevel','error','-i',video,'-f','null','-']);
 console.log(JSON.stringify({video,seconds:seconds(video),bytes:statSync(video).size,chapters:scenes.length,captures:scenes.reduce((n,s)=>n+s.steps.length,0),animatedClicks:clicks.length,fps}));

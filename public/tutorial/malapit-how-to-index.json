@@ -1,0 +1,100 @@
+[
+  {
+    "id": "map",
+    "title": "Find your kind of place",
+    "role": "Explore",
+    "start": 0,
+    "end": 7.917
+  },
+  {
+    "id": "listing",
+    "title": "Have a place to rent out?",
+    "role": "Owner",
+    "start": 7.917,
+    "end": 16.5
+  },
+  {
+    "id": "unit",
+    "title": "Bring your existing rental",
+    "role": "Owner",
+    "start": 16.5,
+    "end": 26.125
+  },
+  {
+    "id": "invite",
+    "title": "Connect with your renter",
+    "role": "Owner",
+    "start": 26.125,
+    "end": 35.417
+  },
+  {
+    "id": "accept",
+    "title": "Now, the renter’s side",
+    "role": "Renter",
+    "start": 35.417,
+    "end": 43.208
+  },
+  {
+    "id": "bill",
+    "title": "Create the monthly bill",
+    "role": "Owner",
+    "start": 43.208,
+    "end": 51.625
+  },
+  {
+    "id": "autobill",
+    "title": "Set up future bills once",
+    "role": "Owner",
+    "start": 51.625,
+    "end": 63.458
+  },
+  {
+    "id": "report",
+    "title": "Direct payment stays an option",
+    "role": "Renter",
+    "start": 63.458,
+    "end": 75.958
+  },
+  {
+    "id": "pending",
+    "title": "Reported is not yet confirmed",
+    "role": "Renter",
+    "start": 75.958,
+    "end": 84.333
+  },
+  {
+    "id": "confirm",
+    "title": "One place to check payments",
+    "role": "Owner",
+    "start": 84.333,
+    "end": 96
+  },
+  {
+    "id": "cash",
+    "title": "Cash works too",
+    "role": "Owner",
+    "start": 96,
+    "end": 104.625
+  },
+  {
+    "id": "history",
+    "title": "Keep the full story",
+    "role": "Owner",
+    "start": 104.625,
+    "end": 114.375
+  },
+  {
+    "id": "checkout",
+    "title": "A look at online checkout",
+    "role": "Preview only",
+    "start": 114.375,
+    "end": 129.958
+  },
+  {
+    "id": "overview",
+    "title": "Choose the way that works for you",
+    "role": "My Rentals",
+    "start": 129.958,
+    "end": 142
+  }
+]
