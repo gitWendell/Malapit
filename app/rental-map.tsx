@@ -25,7 +25,7 @@ export default function RentalMap({ listings = [], center, zoom = 13, viewReques
     import("leaflet").then(L => {
       if (gone || !container.current) return;
       library.current = L;
-      const instance = L.map(container.current, { center, zoom, zoomControl: false, maxBounds: [[3.5, 114.5], [22.5, 129]], minZoom: 5, maxZoom: 19 });
+      const instance = L.map(container.current, { center, zoom, zoomControl: false, scrollWheelZoom: !picking, maxBounds: [[3.5, 114.5], [22.5, 129]], minZoom: 5, maxZoom: 19 });
       map.current = instance;
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors', maxZoom: 19 }).addTo(instance);
       markers.current = L.layerGroup().addTo(instance);
