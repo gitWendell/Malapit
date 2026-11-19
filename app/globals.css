@@ -350,28 +350,41 @@
 
 .pilot-summary{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:24px;padding:22px 24px;border:1px solid var(--line);border-radius:20px;background:#fff8f2}.pilot-summary h2{font-size:19px;margin:8px 0}.pilot-summary p{font-size:13px;line-height:1.7;color:var(--muted);max-width:430px}.pilot-summary>.eyebrow{margin:0}@media(max-width:650px){.pilot-summary{align-items:flex-start;flex-direction:column;gap:10px;padding:18px}}
 
-/* Give desktop listings room for larger photos and readable details. */
+/* Keep each desktop property's photo, details and actions together. */
 @media (min-width:761px) {
+  .browse-shell{min-height:560px}
+  .browse-shell .site-header{height:68px}
+  .intro{padding-top:12px;padding-bottom:12px}
+  .intro .eyebrow{display:none}
+  .intro h1{font-size:26px;line-height:1.2;margin-top:0;letter-spacing:-.7px}
+  .intro-description{margin-top:4px}
+  .search-toolbar{padding-bottom:12px}
+  .search-bar{height:56px}
+  .search-bar label{font-size:12px}
+  .category-toolbar{height:50px}
   .explore-layout{grid-template-columns:minmax(0,3fr) minmax(320px,2fr)}
+  .results-heading{padding-top:14px;padding-bottom:8px}
   .results-heading p,.sort-select select{font-size:14px}
   .sort-select select{max-width:150px}
+  .collection-note{margin-bottom:10px}
   .collection-note,.collection-note button{font-size:12px}
-  .property-grid{grid-template-columns:minmax(0,1fr);gap:24px}
-  .property-card{display:flex;flex-direction:column;padding:12px;border-radius:24px}
-  .card-image{flex-shrink:0;aspect-ratio:1.6;border-radius:18px}
-  .card-info{flex:1;padding:16px 6px 0}
-  .card-price{gap:6px;margin-bottom:10px}
-  .card-price strong{font-size:30px;line-height:1.15}
+  .results-scroll{scroll-snap-type:y proximity;scroll-padding-top:2px;overscroll-behavior:contain}
+  .property-grid{grid-template-columns:minmax(0,1fr);gap:18px}
+  .property-card{display:grid;grid-template-columns:minmax(120px,2fr) minmax(0,3fr);gap:10px 18px;padding:12px;border-radius:24px;scroll-snap-align:start;scroll-margin-top:2px}
+  .card-image{grid-column:1;grid-row:1;height:100%;min-height:240px;aspect-ratio:auto;border-radius:18px}
+  .card-info{grid-column:2;grid-row:1;padding:4px 4px 0;align-self:start}
+  .card-price{gap:6px;margin-bottom:6px}
+  .card-price strong{font-size:28px;line-height:1.15}
   .card-price>span,.card-type,.card-location,.card-specs{font-size:14px}
-  .card-title-row{margin-bottom:6px}
-  .card-info h3{font-size:18px;line-height:1.4}
-  .card-location{margin-top:8px;line-height:1.5}
-  .card-specs{gap:14px;margin-top:12px}
+  .card-title-row{margin-bottom:4px}
+  .card-info h3{font-size:18px;line-height:1.35;display:block;-webkit-line-clamp:unset;overflow:visible;overflow-wrap:anywhere}
+  .card-location{margin-top:6px;line-height:1.4;overflow-wrap:anywhere}
+  .card-specs{gap:12px;margin-top:8px}
   .card-specs svg{width:16px;height:16px}
-  .property-card .availability-note{font-size:14px;line-height:1.5;margin-top:12px}
-  .card-features{font-size:12px;min-height:24px;margin-top:12px}
+  .property-card .availability-note{font-size:14px;line-height:1.4;margin-top:8px}
+  .card-features{font-size:12px;min-height:24px;margin-top:8px}
   .card-features>span{padding:4px 8px}
-  .card-actions{margin:16px 6px 0;padding:10px 0 0}
+  .card-actions{grid-column:1/-1;grid-row:2;margin:0 4px;padding:8px 0 0}
   .card-actions button{font-size:14px;min-height:42px;gap:6px}
   .card-actions svg{width:16px;height:16px}
   .card-badge{font-size:12px;top:12px;left:12px;padding:7px 10px}
@@ -379,7 +392,9 @@
   .card-photo-arrow{width:36px;height:36px}
   .card-photo-count{font-size:12px;bottom:12px;left:12px;padding:5px 8px}
 }
-@media (min-width:1200px) {
-  .property-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .card-image{aspect-ratio:4/3}
+@media (min-width:761px) and (max-width:999px) {
+  .save-button{top:auto;bottom:12px}
+}
+@media (min-width:761px) and (max-height:740px) {
+  .intro{display:none}
 }
