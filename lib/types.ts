@@ -19,11 +19,13 @@ export function distanceKm(a: [number, number], b: [number, number]) {
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLng / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
+export const DEFAULT_CITY = { name: "Cebu City", lat: 10.3157, lng: 123.8854, zoom: 13 };
 export const CITIES = [
+  DEFAULT_CITY,
   { name: "Metro Manila", lat: 14.565, lng: 121.035, zoom: 12 }, { name: "Makati", lat: 14.5547, lng: 121.0244, zoom: 14 },
   { name: "Taguig", lat: 14.5378, lng: 121.0515, zoom: 14 }, { name: "Quezon City", lat: 14.676, lng: 121.0437, zoom: 13 },
   { name: "Manila", lat: 14.5995, lng: 120.9842, zoom: 13 }, { name: "Pasig", lat: 14.5764, lng: 121.0851, zoom: 14 },
-  { name: "Mandaluyong", lat: 14.5794, lng: 121.0359, zoom: 14 }, { name: "Cebu City", lat: 10.3157, lng: 123.8854, zoom: 13 },
+  { name: "Mandaluyong", lat: 14.5794, lng: 121.0359, zoom: 14 },
   { name: "Davao City", lat: 7.0731, lng: 125.6128, zoom: 13 }, { name: "Baguio", lat: 16.4023, lng: 120.596, zoom: 13 },
   { name: "Iloilo City", lat: 10.7202, lng: 122.5621, zoom: 13 }, { name: "Bacolod", lat: 10.6765, lng: 122.9509, zoom: 13 },
   { name: "Cagayan de Oro", lat: 8.4542, lng: 124.6319, zoom: 13 }, { name: "Antipolo", lat: 14.6255, lng: 121.1245, zoom: 13 },

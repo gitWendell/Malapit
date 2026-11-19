@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ImagePlus, LoaderCircle, MapPin, ShieldCheck, X } from "lucide-react";
-import { AMENITIES, CITIES, PROPERTY_TYPES, money, type Listing } from "../lib/types";
+import { AMENITIES, CITIES, DEFAULT_CITY, PROPERTY_TYPES, money, type Listing } from "../lib/types";
 import { listingInput } from "../lib/validation";
 import { api, today } from "../lib/client";
 import { Modal } from "./ui";
@@ -10,7 +10,7 @@ import { PILOT_LIMITS, type PilotStatus } from "../lib/pilot-limits";
 import { preparePropertyPhoto } from "../lib/photo-upload";
 
 type Draft = { title: string; type: string; price: number; priceBasis: string; bedrooms: number; bathrooms: number; area: number; city: string; neighborhood: string; address: string; lat: number; lng: number; exactLocation: boolean; description: string; photos: string[]; amenities: string[]; deposit: number; advance: number; monthlyFees: number; utilities: string; minLease: number; availableFrom: string; role: string; authorityConfirmed: boolean };
-const fresh: Draft = { title: "", type: "Apartment", price: 0, priceBasis: "entire unit", bedrooms: 1, bathrooms: 1, area: 0, city: "Makati", neighborhood: "", address: "", lat: 0, lng: 0, exactLocation: false, description: "", photos: [], amenities: [], deposit: 0, advance: 0, monthlyFees: 0, utilities: "Electricity and water billed separately.", minLease: 6, availableFrom: "", role: "Direct owner", authorityConfirmed: false };
+const fresh: Draft = { title: "", type: "Apartment", price: 0, priceBasis: "entire unit", bedrooms: 1, bathrooms: 1, area: 0, city: DEFAULT_CITY.name, neighborhood: "", address: "", lat: 0, lng: 0, exactLocation: false, description: "", photos: [], amenities: [], deposit: 0, advance: 0, monthlyFees: 0, utilities: "Electricity and water billed separately.", minLease: 6, availableFrom: "", role: "Direct owner", authorityConfirmed: false };
 const steps = ["The basics", "Location", "Photos & details", "Costs & terms"];
 
 export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edit?: Listing; pilot?: PilotStatus; onClose: () => void; onSubmitted: () => Promise<void> }) {
@@ -60,7 +60,7 @@ export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edi
     await Promise.all([...newPhotos.current].map(photo => api(photo, undefined, "DELETE").catch(() => {})));
     onClose();
   }
-  const city = CITIES.find(c => c.name === draft.city) || CITIES[0];
+  const city = CITIES.find(c => c.name === draft.city) || DEFAULT_CITY;
   if (!edit && pilot && !pilot.submissionOpen) return <Modal title="The pilot is full" onClose={onClose}><div className="signin-content"><p>All 30 property places are taken for now. Please check back when a place opens.</p><button className="button primary" onClick={onClose}>Back to browsing</button></div></Modal>;
   return <Modal title={edit ? "Edit your listing" : "Create a rental listing"} onClose={close} wide className="listing-modal">
     <div className="listing-form-layout"><aside className="form-sidebar"><p className="eyebrow">LIST YOUR PLACE</p><h3>Put your rental<br />on the map.</h3><p>Add the location, photos, price, and lease terms.</p><ol className="form-steps">{steps.map((s, i) => <li className={step === i ? "current" : step > i ? "complete" : ""} key={s}><span>{step > i ? <Check size={14} /> : i + 1}</span>{s}</li>)}</ol><div className="free-note"><ShieldCheck size={21} /><div><strong>Your basic listing is free.</strong><p>New and edited listings are reviewed before appearing in search.</p></div></div></aside>

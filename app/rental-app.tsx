@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownUp, ArrowRight, Bath, Bell, BedDouble, Building2, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Compass, DoorOpen, Heart, House, Info, LayoutGrid, LoaderCircle, LogOut, Map, MapPin, Maximize, MessageCircle, Pencil, Plus, RefreshCw, Search, ShieldCheck, SlidersHorizontal, UserRound, X } from "lucide-react";
-import { AMENITIES, CITIES, PROPERTY_TYPES, money, type AppData, type Listing } from "../lib/types";
+import { AMENITIES, CITIES, DEFAULT_CITY, PROPERTY_TYPES, money, type AppData, type Listing } from "../lib/types";
 import { DEMO_LISTINGS } from "../lib/demo";
 import { api } from "../lib/client";
 import RentalMap, { type MapBounds } from "./rental-map";
@@ -26,9 +26,9 @@ const statusLabel = (s: string) => ({ pending: "In review", published: "Publishe
 
 export default function RentalApp() {
   const [data, setData] = useState<AppData>(EMPTY_DATA), [loaded, setLoaded] = useState(false), [loadError, setLoadError] = useState("");
-  const [nav, setNav] = useState<Nav>("explore"), [query, setQuery] = useState("Metro Manila"), [searchText, setSearchText] = useState("Metro Manila");
+  const [nav, setNav] = useState<Nav>("explore"), [query, setQuery] = useState(DEFAULT_CITY.name), [searchText, setSearchText] = useState(DEFAULT_CITY.name);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS), [sort, setSort] = useState("recommended"), [showDemo, setShowDemo] = useState(true);
-  const [center, setCenter] = useState<[number, number]>([14.565, 121.035]), [zoom, setZoom] = useState(13);
+  const [center, setCenter] = useState<[number, number]>([DEFAULT_CITY.lat, DEFAULT_CITY.lng]), [zoom, setZoom] = useState(DEFAULT_CITY.zoom);
   const [bounds, setBounds] = useState<MapBounds | null>(null), latestBounds = useRef<MapBounds | null>(null);
   const [hovered, setHovered] = useState(""), [detail, setDetail] = useState<Listing | null>(null), [panel, setPanel] = useState<"filters" | "about" | "signin" | null>(null);
   const [selectedHomeId, setSelectedHomeId] = useState(""), [mapFocusRequest, setMapFocusRequest] = useState(0), [mapViewRequest, setMapViewRequest] = useState(0);
