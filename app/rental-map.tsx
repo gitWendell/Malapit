@@ -14,6 +14,9 @@ type Props = { listings?: Listing[]; center: [number, number]; zoom?: number; vi
 export default function RentalMap({ listings = [], center, zoom = 13, viewRequest = 0, selected, focusRequest = 0, hovered, onSelect, onBounds, onPick, pickValue, compact }: Props) {
   const container = useRef<HTMLDivElement>(null), map = useRef<Leaflet.Map | null>(null);
   const library = useRef<typeof Leaflet | null>(null), markers = useRef<Leaflet.LayerGroup | null>(null);
+  const pickedMarker = useRef<Leaflet.Marker | null>(null);
+  const picking = Boolean(onPick);
+  const pickerState = useRef({ center, pickValue }); pickerState.current = { center, pickValue };
   const priceMarkers = useRef(new Map<string, { marker: Leaflet.Marker; button: HTMLButtonElement }>());
   const callbacks = useRef({ onSelect, onBounds, onPick }); callbacks.current = { onSelect, onBounds, onPick };
   const [ready, setReady] = useState(false), [error, setError] = useState("");
@@ -30,19 +33,47 @@ export default function RentalMap({ listings = [], center, zoom = 13, viewReques
       instance.on("click", (e: Leaflet.LeafletMouseEvent) => callbacks.current.onPick?.([Number(e.latlng.lat.toFixed(6)), Number(e.latlng.lng.toFixed(6))]));
       observer = new ResizeObserver(() => instance.invalidateSize()); observer.observe(container.current);
       setReady(true);
-    }).catch(() => setError("The map could not load. You can still browse the homes in the list."));
+    }).catch(() => setError(picking ? "The map could not load. Please reload and try again." : "The map could not load. You can still browse the homes in the list."));
     return () => { gone = true; observer?.disconnect(); map.current?.remove(); map.current = null; setReady(false); };
   }, []);
   useEffect(() => { if (ready) { map.current?.invalidateSize(); map.current?.setView(center, zoom, { animate: false }); } }, [ready, center[0], center[1], zoom, viewRequest]);
+  useEffect(() => {
+    const L = library.current, instance = map.current;
+    if (!ready || !picking || !L || !instance) return;
+    const node = document.createElement("div"); node.className = "picked-pin";
+    const marker = L.marker(pickerState.current.pickValue || pickerState.current.center, {
+      icon: L.divIcon({ html: node, className: "map-marker-shell property-location-marker", iconSize: [44, 52], iconAnchor: [22, 44] }),
+      draggable: true, autoPan: true, keyboard: true, title: "Drag the pin to your property", alt: "Property location pin",
+    }).addTo(instance);
+    pickedMarker.current = marker;
+    const choose = () => { const point = marker.getLatLng(); callbacks.current.onPick?.([Number(point.lat.toFixed(6)), Number(point.lng.toFixed(6))]); };
+    marker.on("dragend", choose);
+    const element = marker.getElement();
+    element?.setAttribute("aria-label", "Property location pin. Drag or use arrow keys to move. Press Enter to confirm.");
+    const moveWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); choose(); return; }
+      const shifts: Record<string, [number, number]> = { ArrowLeft: [-20, 0], ArrowRight: [20, 0], ArrowUp: [0, -20], ArrowDown: [0, 20] };
+      const shift = shifts[event.key]; if (!shift) return;
+      event.preventDefault(); event.stopPropagation();
+      const position = instance.latLngToContainerPoint(marker.getLatLng()).add(shift);
+      marker.setLatLng(instance.containerPointToLatLng(position));
+      instance.panInside(marker.getLatLng(), { padding: [30, 30], animate: false }); choose();
+    };
+    element?.addEventListener("keydown", moveWithKeyboard);
+    return () => { element?.removeEventListener("keydown", moveWithKeyboard); marker.remove(); pickedMarker.current = null; };
+  }, [ready, picking]);
+  useEffect(() => {
+    const marker = pickedMarker.current;
+    if (!ready || !marker) return;
+    const point = pickValue || center;
+    if (!marker.getLatLng().equals(point)) marker.setLatLng(point);
+    marker.setOpacity(pickValue ? 1 : .65);
+  }, [ready, picking, pickValue?.[0], pickValue?.[1], center[0], center[1]]);
   useEffect(() => {
     const L = library.current, layer = markers.current;
     if (!ready || !L || !layer) return;
     layer.clearLayers();
     priceMarkers.current.clear();
-    if (pickValue) {
-      const node = document.createElement("div"); node.className = "picked-pin"; node.textContent = "+";
-      L.marker(pickValue, { icon: L.divIcon({ html: node, className: "map-marker-shell", iconSize: [32, 40], iconAnchor: [16, 40] }) }).addTo(layer);
-    }
     listings.forEach(p => {
       const button = document.createElement("button"); button.type = "button";
       button.className = "price-pin";
@@ -53,7 +84,7 @@ export default function RentalMap({ listings = [], center, zoom = 13, viewReques
       marker.on("click", e => { L.DomEvent.stopPropagation(e); callbacks.current.onSelect?.(p); });
       priceMarkers.current.set(p.id, { marker, button });
     });
-  }, [ready, listings, pickValue]);
+  }, [ready, listings]);
   useEffect(() => {
     if (!ready) return;
     const activeId = hovered || selected;
@@ -90,10 +121,10 @@ export default function RentalMap({ listings = [], center, zoom = 13, viewReques
     <div ref={container} className="leaflet-host" aria-label={onPick ? "Choose the property location on the map" : "Rental homes on the map"} />
     {!ready && <div className="map-loading"><MapPin size={28} /><span>{error || "Finding your neighborhood…"}</span></div>}
     <div className="map-zoom-controls">
-      <button aria-label="Zoom in" onClick={() => map.current?.zoomIn()}><Plus size={18} /></button>
-      <button aria-label="Zoom out" onClick={() => map.current?.zoomOut()}><Minus size={18} /></button>
-      <button aria-label="Return to selected location" onClick={() => map.current?.setView(pickValue || priceMarkers.current.get(selected || "")?.marker.getLatLng() || center, selected ? Math.max(zoom, 15) : zoom, { animate: false })}><LocateFixed size={18} /></button>
+      <button type="button" aria-label="Zoom in" onClick={() => map.current?.zoomIn()}><Plus size={18} /></button>
+      <button type="button" aria-label="Zoom out" onClick={() => map.current?.zoomOut()}><Minus size={18} /></button>
+      <button type="button" aria-label={picking ? "Show property pin" : "Return to selected location"} onClick={() => map.current?.setView(pickedMarker.current?.getLatLng() || pickValue || priceMarkers.current.get(selected || "")?.marker.getLatLng() || center, selected ? Math.max(zoom, 15) : zoom, { animate: false })}><LocateFixed size={18} /></button>
     </div>
-    {onPick && <div className="map-pick-hint"><MapPin size={14} />{pickValue ? "Pin placed. Tap to move it." : "Tap the map to place your pin"}</div>}
+    {onPick && <div className="map-pick-toolbar"><span className="map-pick-hint"><MapPin size={16} />{pickValue ? "Drag or tap to adjust." : "Drag the pin or tap the map."}</span><button type="button" className="button primary" disabled={!ready} onClick={() => { const point = pickedMarker.current?.getLatLng(); if (point) callbacks.current.onPick?.([Number(point.lat.toFixed(6)), Number(point.lng.toFixed(6))]); }}>Confirm pin</button></div>}
   </div>;
 }

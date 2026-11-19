@@ -14,13 +14,13 @@ import ListingForm from "./listing-form";
 import MyRentals from "./my-rentals";
 import { Empty, Logo, Modal, SignIn } from "./ui";
 import { PILOT_LIMITS } from "../lib/pilot-limits";
+import { isMetroManilaCity } from "../lib/philippine-locations";
 
 const EMPTY_DATA: AppData = { session: null, listings: [], myListings: [], reviewListings: [], savedIds: [], inquiries: [], reports: [] };
 type Nav = "explore" | "saved" | "listings" | "inbox" | "review" | "rentals";
 type Filters = { type: string; maxPrice: number; beds: number; amenities: string[]; moveIn: string };
 const DEFAULT_FILTERS: Filters = { type: "All homes", maxPrice: 1000000, beds: -1, amenities: [], moveIn: "" };
 const typeIcons = [LayoutGrid, Building2, Building2, House, DoorOpen, BedDouble];
-const metroCities = ["Makati", "Taguig", "Quezon City", "Manila", "Pasig", "Mandaluyong", "Pasay", "Parañaque", "Las Piñas", "Muntinlupa", "San Juan", "Marikina", "Caloocan", "Valenzuela", "Malabon", "Navotas"];
 const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const statusLabel = (s: string) => ({ pending: "In review", published: "Published", paused: "Paused", rented: "Rented", changes_requested: "Needs changes", withdrawn: "Withdrawn" }[s] || s);
 
@@ -73,7 +73,7 @@ export default function RentalApp() {
   const matches = useMemo(() => {
     let items = homes.filter(p => {
       const term = normalize(query.trim()), haystack = normalize(`${p.title} ${p.city} ${p.neighborhood} ${p.address} ${p.description}`);
-      const areaMatch = !term || term === "philippines" || (term === "metro manila" ? metroCities.includes(p.city) : haystack.includes(term));
+      const areaMatch = !term || term === "philippines" || (term === "metro manila" ? isMetroManilaCity(p.city) : haystack.includes(term));
       return areaMatch && (nav !== "saved" || data.savedIds.includes(p.id)) && (filters.type === "All homes" || p.type === filters.type) && p.price <= filters.maxPrice && (filters.beds < 0 || (filters.beds === 0 ? p.bedrooms === 0 : p.bedrooms >= filters.beds)) && filters.amenities.every(a => p.amenities.includes(a)) && (!filters.moveIn || p.availableFrom <= filters.moveIn) && (!bounds || (p.lat >= bounds.south && p.lat <= bounds.north && p.lng >= bounds.west && p.lng <= bounds.east));
     });
     if (sort === "low") items = [...items].sort((a, b) => a.price - b.price);

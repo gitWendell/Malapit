@@ -8,7 +8,7 @@ const tutorialVersion = "motion-3";
 const tutorialAsset = (suffix: string) => "/tutorial/malapit-how-to" + suffix + "?v=" + tutorialVersion;
 const steps = [
   ["Find a place", "Use the map, location search and filters to compare nearby homes. Save a home or send the lister an inquiry about a viewing. Homes marked Example home are fictional."],
-  ["Advertise a property", "Owners use List your place to submit a public listing, its location, photos and costs. It goes through review before appearing publicly. Keep its availability current."],
+  ["Advertise a property", "Choose List your place and enter the rent. Pick the province, city or municipality, and barangay. Drag the property pin to the entrance or tap the correct spot on the map; no coordinates are needed. Add your photos and costs, then submit for review. Keep the listing’s availability current."],
   ["Add a private rental", "In My Rentals, add the unit or room you manage. Enter its agreed rent, due day and rental dates. Adding this private record does not advertise it on the map."],
   ["Connect the renter", "Invite the renter’s Google sign-in email, then copy and share the invitation link yourself. The renter reviews the details and accepts in their account. Invitations expire after seven days. Accepting does not sign a lease or authorize a charge."],
   ["Set up your bills", "Open the connected rental. Use Create rent bill for a bill you check yourself, or Set up monthly bills for an agreed calendar-month cycle. Review the rent and first full month before turning it on. Partial months need a manual bill. You can pause future bills; closing the connection stops them. This never deducts money."],

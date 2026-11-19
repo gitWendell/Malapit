@@ -11,6 +11,7 @@ This standalone test uses **Cloudflare Workers Free + D1 Free**, with **Supabase
 - OpenStreetMap with linked property cards and price pins, city search, budget and home filters.
 - Public browsing, account-owned saved homes, private inquiries and owner replies.
 - Four-step property submission with map placement and up to five automatically compressed photos.
+- Clearable price and cost fields, province/city/barangay pickers, and a draggable or tappable property pin. Numeric coordinates are kept out of the form. The bundled PSA place names and approximate map hints are documented in [listing address data](docs/listing-location-data.md).
 - Administrator review, corrections, owner edits, pause, rented and withdrawn states.
 - Availability reminders and hiding listings after 14 days without confirmation.
 - Approximate-location redaction in the public API and private unpublished photos.
