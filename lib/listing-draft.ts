@@ -26,3 +26,10 @@ export function normalizeNumberText(value: string): string {
 export function listingNumbers(draft: ListingNumberDraft): Record<ListingNumberField, number> {
   return Object.fromEntries(LISTING_NUMBER_FIELDS.map(key => [key, draft[key].trim() ? Number(draft[key]) : LISTING_NUMBER_RULES[key].optional ? 0 : Number.NaN])) as Record<ListingNumberField, number>;
 }
+
+export function listingLocationError(value: { city: string; neighborhood: string; lat: number; lng: number }): string | null {
+  if (!value.city.trim() || !value.neighborhood.trim()) return "Choose the property’s city and barangay before continuing.";
+  if (!value.lat || !value.lng) return "Place your property pin by dragging it, tapping the map, or confirming its position.";
+  if (!Number.isFinite(value.lat) || !Number.isFinite(value.lng) || value.lat < 4.5 || value.lat > 21.5 || value.lng < 116 || value.lng > 127) return "This pin is outside the supported map area. Move it to your property in the Philippines.";
+  return null;
+}

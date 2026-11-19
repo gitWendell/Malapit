@@ -9,16 +9,16 @@ import { shortMoney } from "../lib/types";
 export type MapBounds = { south: number; north: number; west: number; east: number };
 type Props = { listings?: Listing[]; center: [number, number]; zoom?: number; viewRequest?: number; selected?: string; focusRequest?: number;
   hovered?: string; onSelect?: (p: Listing) => void; onBounds?: (b: MapBounds) => void;
-  onPick?: (p: [number, number]) => void; pickValue?: [number, number] | null; compact?: boolean };
+  onPick?: (p: [number, number]) => void; onConfirmPick?: (p: [number, number]) => void; pickValue?: [number, number] | null; compact?: boolean };
 
-export default function RentalMap({ listings = [], center, zoom = 13, viewRequest = 0, selected, focusRequest = 0, hovered, onSelect, onBounds, onPick, pickValue, compact }: Props) {
+export default function RentalMap({ listings = [], center, zoom = 13, viewRequest = 0, selected, focusRequest = 0, hovered, onSelect, onBounds, onPick, onConfirmPick, pickValue, compact }: Props) {
   const container = useRef<HTMLDivElement>(null), map = useRef<Leaflet.Map | null>(null);
   const library = useRef<typeof Leaflet | null>(null), markers = useRef<Leaflet.LayerGroup | null>(null);
   const pickedMarker = useRef<Leaflet.Marker | null>(null);
   const picking = Boolean(onPick);
   const pickerState = useRef({ center, pickValue }); pickerState.current = { center, pickValue };
   const priceMarkers = useRef(new Map<string, { marker: Leaflet.Marker; button: HTMLButtonElement }>());
-  const callbacks = useRef({ onSelect, onBounds, onPick }); callbacks.current = { onSelect, onBounds, onPick };
+  const callbacks = useRef({ onSelect, onBounds, onPick, onConfirmPick }); callbacks.current = { onSelect, onBounds, onPick, onConfirmPick };
   const [ready, setReady] = useState(false), [error, setError] = useState("");
   useEffect(() => {
     let gone = false; let observer: ResizeObserver | null = null;
@@ -46,12 +46,12 @@ export default function RentalMap({ listings = [], center, zoom = 13, viewReques
       draggable: true, autoPan: true, keyboard: true, title: "Drag the pin to your property", alt: "Property location pin",
     }).addTo(instance);
     pickedMarker.current = marker;
-    const choose = () => { const point = marker.getLatLng(); callbacks.current.onPick?.([Number(point.lat.toFixed(6)), Number(point.lng.toFixed(6))]); };
-    marker.on("dragend", choose);
+    const choose = (confirm = false) => { const point = marker.getLatLng(); const position: [number, number] = [Number(point.lat.toFixed(6)), Number(point.lng.toFixed(6))]; if (confirm && callbacks.current.onConfirmPick) callbacks.current.onConfirmPick(position); else callbacks.current.onPick?.(position); };
+    marker.on("dragend", () => choose());
     const element = marker.getElement();
     element?.setAttribute("aria-label", "Property location pin. Drag or use arrow keys to move. Press Enter to confirm.");
     const moveWithKeyboard = (event: KeyboardEvent) => {
-      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); choose(); return; }
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); choose(true); return; }
       const shifts: Record<string, [number, number]> = { ArrowLeft: [-20, 0], ArrowRight: [20, 0], ArrowUp: [0, -20], ArrowDown: [0, 20] };
       const shift = shifts[event.key]; if (!shift) return;
       event.preventDefault(); event.stopPropagation();
@@ -125,6 +125,6 @@ export default function RentalMap({ listings = [], center, zoom = 13, viewReques
       <button type="button" aria-label="Zoom out" onClick={() => map.current?.zoomOut()}><Minus size={18} /></button>
       <button type="button" aria-label={picking ? "Show property pin" : "Return to selected location"} onClick={() => map.current?.setView(pickedMarker.current?.getLatLng() || pickValue || priceMarkers.current.get(selected || "")?.marker.getLatLng() || center, selected ? Math.max(zoom, 15) : zoom, { animate: false })}><LocateFixed size={18} /></button>
     </div>
-    {onPick && <div className="map-pick-toolbar"><span className="map-pick-hint"><MapPin size={16} />{pickValue ? "Drag or tap to adjust." : "Drag the pin or tap the map."}</span><button type="button" className="button primary" disabled={!ready} onClick={() => { const point = pickedMarker.current?.getLatLng(); if (point) callbacks.current.onPick?.([Number(point.lat.toFixed(6)), Number(point.lng.toFixed(6))]); }}>Confirm pin</button></div>}
+    {onPick && <div className="map-pick-toolbar"><span className="map-pick-hint"><MapPin size={16} />{pickValue ? "Drag or tap to adjust." : "Drag the pin or tap the map."}</span><button type="button" className="button primary" disabled={!ready} onClick={() => { const point = pickedMarker.current?.getLatLng(); if (point) { const position: [number, number] = [Number(point.lat.toFixed(6)), Number(point.lng.toFixed(6))]; if (callbacks.current.onConfirmPick) callbacks.current.onConfirmPick(position); else callbacks.current.onPick?.(position); } }}>{onConfirmPick ? "Confirm & continue" : "Confirm pin"}</button></div>}
   </div>;
 }

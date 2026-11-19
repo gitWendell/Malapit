@@ -6,9 +6,9 @@ import { barangayLabel, cityMapView, findLocationBarangay, findLocationCity, typ
 import RentalMap from "./rental-map";
 
 export type ListingLocationValue = { city: string; neighborhood: string; address: string; lat: number; lng: number; exactLocation: boolean };
-type Props = { value: ListingLocationValue; editing: boolean; onChange: (patch: Partial<ListingLocationValue>) => void };
+type Props = { value: ListingLocationValue; editing: boolean; onChange: (patch: Partial<ListingLocationValue>) => void; onConfirm: (point: LocationPoint) => void };
 
-export default function ListingLocation({ value, editing, onChange }: Props) {
+export default function ListingLocation({ value, editing, onChange, onConfirm }: Props) {
   const [index, setIndex] = useState<LocationIndex | null>(null), [indexError, setIndexError] = useState(false), [reload, setReload] = useState(0);
   const [area, setArea] = useState<LocationArea | null>(null), [areaError, setAreaError] = useState(false), [areaReload, setAreaReload] = useState(0);
   const [province, setProvince] = useState("");
@@ -73,12 +73,12 @@ export default function ListingLocation({ value, editing, onChange }: Props) {
     {selectedCity && !currentArea && !areaError && <p className="location-loading full" role="status"><LoaderCircle size={16} className="spin" />Loading barangays…</p>}
     {areaError && <p className="location-load-error full" role="alert">We couldn’t load the barangays. <button type="button" className="text-link" onClick={() => setAreaReload(count => count + 1)}>Try again</button></p>}
     <label className="field full"><span>Building and street address</span><input required minLength={8} maxLength={240} placeholder="e.g. Building name, house number, street" value={value.address} onChange={event => onChange({ address: event.target.value })} /></label>
+    <label className="check-row full"><input type="checkbox" checked={value.exactLocation} onChange={event => onChange({ exactLocation: event.target.checked })} /><span>Show the exact location publicly<small>When unchecked, renters see an approximate pin and neighborhood.</small></span></label>
     <div className="full location-pin-intro"><h4>Place your property pin</h4><p>Drag the pin to your property’s entrance, or tap the right spot on the map.</p></div>
     {readyForMap ? <>
-      <div className="full form-map"><RentalMap compact center={view.center} zoom={view.zoom} pickValue={value.lat && value.lng ? [value.lat, value.lng] : null} onPick={point => onChange({ lat: point[0], lng: point[1] })} /></div>
+      <div className="full form-map"><RentalMap compact center={view.center} zoom={view.zoom} pickValue={value.lat && value.lng ? [value.lat, value.lng] : null} onPick={point => onChange({ lat: point[0], lng: point[1] })} onConfirmPick={onConfirm} /></div>
       <p className={`full location-pin-status ${value.lat && value.lng ? "is-placed" : ""}`} role="status">{value.lat && value.lng ? <><CheckCircle2 size={17} />Pin placed. You can drag it again to adjust.</> : <><MapPin size={17} />Move the pin, tap the map, or confirm the pin if it is already correct.</>}</p>
     </> : <div className="full location-map-placeholder"><MapPin size={25} /><p>Choose your city and barangay to open the map.</p></div>}
-    <label className="check-row full"><input type="checkbox" checked={value.exactLocation} onChange={event => onChange({ exactLocation: event.target.checked })} /><span>Show the exact location publicly<small>When unchecked, renters see an approximate pin and neighborhood.</small></span></label>
     <p className="full location-source">Place names from the <a href="https://psa.gov.ph/classification/psgc" target="_blank" rel="noreferrer">Philippine Statistics Authority</a>.</p>
   </div>;
 }

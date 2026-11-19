@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialListingNumbers, listingNumbers, normalizeNumberText } from '../lib/listing-draft.ts';
+import { initialListingNumbers, listingNumbers, listingLocationError, normalizeNumberText } from '../lib/listing-draft.ts';
 
 test('a new listing starts with an empty price and optional costs', () => {
   const draft=initialListingNumbers();
@@ -38,4 +38,14 @@ test('unnecessary leading zeros are removed without changing decimals or empty e
 test('editing preserves saved amounts including zero and fractional floor area', () => {
   const initial={price:15000,bedrooms:0,bathrooms:1,area:28.5,deposit:0,advance:15000,monthlyFees:500,minLease:6};
   assert.deepEqual(listingNumbers(initialListingNumbers(initial)),initial);
+});
+
+test('location confirmation requires a city, barangay, and property pin', () => {
+  const placed={city:'Cebu City',neighborhood:'Lahug',lat:10.33,lng:123.90};
+  assert.equal(listingLocationError(placed),null);
+  assert.match(listingLocationError({...placed,city:''}),/city and barangay/);
+  assert.match(listingLocationError({...placed,neighborhood:' '}),/city and barangay/);
+  assert.match(listingLocationError({...placed,lat:0,lng:0}),/property pin/);
+  assert.match(listingLocationError({...placed,lat:45}),/Philippines/);
+  assert.match(listingLocationError({...placed,lng:Infinity}),/Philippines/);
 });

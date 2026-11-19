@@ -6,7 +6,8 @@ import { listingInput } from "../lib/validation";
 import { api, today } from "../lib/client";
 import { Modal } from "./ui";
 import ListingLocation from "./listing-location";
-import { initialListingNumbers, listingNumbers, LISTING_NUMBER_RULES, normalizeNumberText, type ListingNumberDraft, type ListingNumberField } from "../lib/listing-draft";
+import ListingMoneyInput from "./listing-money-input";
+import { initialListingNumbers, listingNumbers, listingLocationError, LISTING_NUMBER_RULES, normalizeNumberText, type ListingNumberDraft, type ListingNumberField } from "../lib/listing-draft";
 import { PILOT_LIMITS, type PilotStatus } from "../lib/pilot-limits";
 import { preparePropertyPhoto } from "../lib/photo-upload";
 
@@ -22,6 +23,7 @@ export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edi
   const update = (key: keyof Draft, value: unknown) => { setDraft(p => ({ ...p, [key]: value })); setError(""); };
   const field = (key: ListingNumberField, label: string) => {
     const rules = LISTING_NUMBER_RULES[key];
+    if (["price", "deposit", "advance", "monthlyFees"].includes(key)) return <ListingMoneyInput name={key} label={label} value={draft[key]} min={rules.min} max={rules.max} optional={rules.optional} onChange={value => update(key, value)} />;
     return <label className="field"><span>{label}</span><input name={key} aria-label={label} type="number" inputMode={key === "area" ? "decimal" : "numeric"} min={rules.min} max={rules.max} step={rules.step} required={!rules.optional} placeholder={rules.optional ? "Optional" : key === "price" ? "e.g. 10000" : undefined} value={draft[key]} onChange={event => update(key, event.target.value)} onBlur={event => update(key, normalizeNumberText(event.target.value))} /></label>;
   };
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -42,9 +44,7 @@ export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edi
   }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
-    if (step === 1 && (!draft.city.trim() || !draft.neighborhood.trim())) { setError("Choose the property’s city and barangay before continuing."); return; }
-    if (step === 1 && (!draft.lat || !draft.lng)) { setError("Place your property pin by dragging it, tapping the map, or confirming its position."); return; }
-    if (step === 1 && (!Number.isFinite(draft.lat) || !Number.isFinite(draft.lng) || draft.lat < 4.5 || draft.lat > 21.5 || draft.lng < 116 || draft.lng > 127)) { setError("This pin is outside the supported map area. Move it to your property in the Philippines."); return; }
+    if (step === 1) { const problem = listingLocationError(draft); if (problem) { setError(problem); return; } }
     if (step === 2 && !draft.photos.length) { setError("Upload at least one current photo of your property."); return; }
     if (step < 3) { setStep(s => s + 1); form.current?.closest(".modal")?.scrollTo({ top: 0, behavior: "smooth" }); return; }
     const result = listingInput.safeParse({ ...draft, ...listingNumbers(draft) });
@@ -58,6 +58,14 @@ export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edi
     }
     catch (e) { setError(e instanceof Error ? e.message : "Please try again."); }
     finally { setBusy(false); }
+  }
+  function confirmLocation(point: [number, number]) {
+    const next = { ...draft, lat: point[0], lng: point[1] };
+    setDraft(next); setError("");
+    if (!form.current?.checkValidity()) { setError("Complete the address fields above, then confirm your pin."); form.current?.reportValidity(); return; }
+    const problem = listingLocationError(next);
+    if (problem) { setError(problem); return; }
+    setStep(2); form.current?.closest(".modal")?.scrollTo({ top: 0, behavior: "smooth" });
   }
   async function close() {
     if (busy || uploading) return;
@@ -78,7 +86,7 @@ export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edi
         <label className="field"><span>Price is for</span><select value={draft.priceBasis} onChange={e => update("priceBasis", e.target.value)}><option value="entire unit">The entire unit</option><option value="per room">One room</option><option value="per person">One person / bedspace</option></select></label>
         {field("bedrooms", "Bedrooms (0 for studio)")}{field("bathrooms", "Bathrooms")}{field("area", "Floor area (m²)")}
       </div>}
-      {step === 1 && <ListingLocation value={draft} editing={Boolean(edit)} onChange={patch => { setDraft(previous => ({ ...previous, ...patch })); setError(""); }} />}
+      {step === 1 && <ListingLocation value={draft} editing={Boolean(edit)} onConfirm={confirmLocation} onChange={patch => { setDraft(previous => ({ ...previous, ...patch })); setError(""); }} />}
       {step === 2 && <div className="form-grid">
         <div className="field full"><span>Property photos · {draft.photos.length}/5</span><div className="upload-grid">{draft.photos.map((photo, i) => <div className="upload-photo" key={photo}><img src={photo} alt={`Property photo ${i + 1}`} /><button type="button" aria-label={`Remove photo ${i + 1}`} disabled={uploading || busy} onClick={() => void removePhoto(photo)}><X size={14} /></button></div>)}{draft.photos.length < PILOT_LIMITS.photosPerProperty && <label className="upload-target">{uploading ? <LoaderCircle className="spin" /> : <ImagePlus />}<span>{uploading ? "Uploading…" : "Add photos"}</span><input aria-label="Upload property photos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading || pilot?.photosReady === false} onChange={upload} /></label>}</div><small>Add up to five of your own current photos. JPEG, PNG, or WebP originals up to 12 MB are resized automatically. The pilot allows 10 uploads per person each day.</small></div>
         {pilot?.photosReady === false && <p className="form-help full" role="status">Photo uploads are being prepared. Please come back later to finish your listing.</p>}
