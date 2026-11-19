@@ -349,3 +349,37 @@
 }
 
 .pilot-summary{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:24px;padding:22px 24px;border:1px solid var(--line);border-radius:20px;background:#fff8f2}.pilot-summary h2{font-size:19px;margin:8px 0}.pilot-summary p{font-size:13px;line-height:1.7;color:var(--muted);max-width:430px}.pilot-summary>.eyebrow{margin:0}@media(max-width:650px){.pilot-summary{align-items:flex-start;flex-direction:column;gap:10px;padding:18px}}
+
+/* Give desktop listings room for larger photos and readable details. */
+@media (min-width:761px) {
+  .explore-layout{grid-template-columns:minmax(0,3fr) minmax(320px,2fr)}
+  .results-heading p,.sort-select select{font-size:14px}
+  .sort-select select{max-width:150px}
+  .collection-note,.collection-note button{font-size:12px}
+  .property-grid{grid-template-columns:minmax(0,1fr);gap:24px}
+  .property-card{display:flex;flex-direction:column;padding:12px;border-radius:24px}
+  .card-image{flex-shrink:0;aspect-ratio:1.6;border-radius:18px}
+  .card-info{flex:1;padding:16px 6px 0}
+  .card-price{gap:6px;margin-bottom:10px}
+  .card-price strong{font-size:30px;line-height:1.15}
+  .card-price>span,.card-type,.card-location,.card-specs{font-size:14px}
+  .card-title-row{margin-bottom:6px}
+  .card-info h3{font-size:18px;line-height:1.4}
+  .card-location{margin-top:8px;line-height:1.5}
+  .card-specs{gap:14px;margin-top:12px}
+  .card-specs svg{width:16px;height:16px}
+  .property-card .availability-note{font-size:14px;line-height:1.5;margin-top:12px}
+  .card-features{font-size:12px;min-height:24px;margin-top:12px}
+  .card-features>span{padding:4px 8px}
+  .card-actions{margin:16px 6px 0;padding:10px 0 0}
+  .card-actions button{font-size:14px;min-height:42px;gap:6px}
+  .card-actions svg{width:16px;height:16px}
+  .card-badge{font-size:12px;top:12px;left:12px;padding:7px 10px}
+  .save-button{width:44px;height:44px;top:12px;right:12px}
+  .card-photo-arrow{width:36px;height:36px}
+  .card-photo-count{font-size:12px;bottom:12px;left:12px;padding:5px 8px}
+}
+@media (min-width:1200px) {
+  .property-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card-image{aspect-ratio:4/3}
+}
