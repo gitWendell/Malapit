@@ -64,6 +64,13 @@
       "when": 1795146615025,
       "tag": "0008_inquiry_rental_handoff",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1795165562202,
+      "tag": "0009_hitpay_sandbox_checkout",
+      "breakpoints": true
     }
   ]
 }

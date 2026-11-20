@@ -112,3 +112,12 @@ export const inquiryRentalOffers = sqliteTable("inquiry_rental_offers", {
   amountCents: integer("amount_cents").notNull(), periodStart: text("period_start").notNull(),
   periodEnd: text("period_end").notNull(), dueDate: text("due_date").notNull(), note: text("note").notNull().default(""),
 }, table => [index("inquiry_rental_offer_thread").on(table.inquiryId), check("inquiry_rental_offer_amount", sql`${table.amountCents} BETWEEN 1 AND 100000000`)]);
+
+// Sandbox payments deliberately never enter rental_payments or real balances.
+export const hitpaySandboxCheckouts = sqliteTable("hitpay_sandbox_checkouts", {
+  id: text("id").primaryKey(), billId: text("bill_id").notNull().references(() => rentalBills.id),
+  ownerId: text("owner_id").notNull(), renterId: text("renter_id").notNull(), actorId: text("actor_id").notNull(),
+  businessId: text("business_id").notNull(), providerId: text("provider_id").unique(), checkoutUrl: text("checkout_url"),
+  status: text("status").notNull().default("creating"), amountCents: integer("amount_cents").notNull().default(100), currency: text("currency").notNull().default("SGD"),
+  createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(), updatedAt: text("updated_at").notNull(), verifiedAt: text("verified_at"),
+}, table => [index("hitpay_sandbox_bill").on(table.billId,table.createdAt), index("hitpay_sandbox_daily").on(table.actorId,table.createdDay), uniqueIndex("hitpay_sandbox_open_bill").on(table.billId).where(sql`${table.status} IN ('creating','pending','unknown')`), check("hitpay_sandbox_fixed_amount",sql`${table.amountCents}=100 AND ${table.currency}='SGD'`), check("hitpay_sandbox_status",sql`${table.status} IN ('creating','pending','unknown','completed','failed','expired','canceled','inactive')`)]);

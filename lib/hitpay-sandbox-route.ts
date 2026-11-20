@@ -1,0 +1,2 @@
+import{HttpError,routeError}from"./server";
+export function sandboxError(error:unknown){let response:Response;if(error instanceof HttpError||error instanceof SyntaxError||error&&typeof error==="object"&&"issues"in error)response=routeError(error);else response=Response.json({error:"HitPay sandbox could not complete this request. Refresh the status before trying again."},{status:502});response.headers.set("Cache-Control","private, no-store");return response;}

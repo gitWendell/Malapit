@@ -7,7 +7,7 @@
   "workers_dev": true,
   "preview_urls": false,
   "assets": { "html_handling": "none", "binding": "ASSETS", "run_worker_first": ["/tutorial/malapit-how-to.mp4"] },
-  "vars": { "AUTH_MODE": "supabase" },
+  "vars": { "AUTH_MODE": "supabase", "HITPAY_SANDBOX_BUSINESS_ID": "a344f0b8-a3ef-4b1e-afe4-b6efb9971489" },
   "triggers": { "crons": ["*/5 * * * *"] },
   "d1_databases": [{
     "binding": "DB",
