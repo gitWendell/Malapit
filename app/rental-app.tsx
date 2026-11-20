@@ -29,7 +29,7 @@ export default function RentalApp() {
   const [nav, setNav] = useState<Nav>("explore"), [query, setQuery] = useState(DEFAULT_CITY.name), [searchText, setSearchText] = useState(DEFAULT_CITY.name);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS), [sort, setSort] = useState("recommended"), [showDemo, setShowDemo] = useState(true);
   const [center, setCenter] = useState<[number, number]>([DEFAULT_CITY.lat, DEFAULT_CITY.lng]), [zoom, setZoom] = useState(DEFAULT_CITY.zoom);
-  const [bounds, setBounds] = useState<MapBounds | null>(null), latestBounds = useRef<MapBounds | null>(null);
+  const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [hovered, setHovered] = useState(""), [detail, setDetail] = useState<Listing | null>(null), [panel, setPanel] = useState<"filters" | "about" | "signin" | null>(null);
   const [selectedHomeId, setSelectedHomeId] = useState(""), [mapFocusRequest, setMapFocusRequest] = useState(0), [mapViewRequest, setMapViewRequest] = useState(0);
   const mapPanel = useRef<HTMLElement | null>(null);
@@ -144,9 +144,9 @@ export default function RentalApp() {
         <div className="results-scroll">{matches.length ? <div className="property-grid">{matches.map(home => <PropertyCard key={home.id} home={home} now={now} selected={home.id === selectedHomeId} saved={data.savedIds.includes(home.id)} onSave={() => save(home)} onLocate={() => focusHome(home)} onOpen={() => openHome(home)} onHover={value => setHovered(current => value ? home.id : current === home.id ? "" : current)} />)}</div> : <Empty title={nav === "saved" ? "No saved rentals yet" : "No matching rentals"} description={nav === "saved" ? "Tap the heart on a listing to save it here." : "Try another area, increase your budget, or remove a filter."} action={<button className="button primary" onClick={() => { if (nav === "saved") go("explore"); else { setFilters(DEFAULT_FILTERS); setBounds(null); search(""); } }}>Browse rentals<ArrowRight size={16} /></button>} />}
           <footer className="results-footer"><span>Malapit / Philippines</span><nav aria-label="Website information"><a href="/guide">How to use</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><button onClick={() => setPanel("about")}>About Malapit<ArrowRight size={12} /></button></nav></footer>
         </div>
-      </section><section ref={mapPanel} className="map-pane" aria-label="Map search"><RentalMap listings={matches} center={center} zoom={zoom} viewRequest={mapViewRequest} selected={selectedHomeId} focusRequest={mapFocusRequest} hovered={hovered} onSelect={focusHome} onBounds={b => { latestBounds.current = b; }} />
+      </section><section ref={mapPanel} className="map-pane" aria-label="Map search"><RentalMap listings={matches} center={center} zoom={zoom} viewRequest={mapViewRequest} selected={selectedHomeId} focusRequest={mapFocusRequest} hovered={hovered} onSelect={focusHome} onBounds={b => { setBounds(b); setQuery(""); setSearchText(""); }} />
         {showDemo && <div className="map-demo-label"><Info size={13} />Includes fictional example homes</div>}
-        <button className="search-area-button" onClick={() => { if (latestBounds.current) { setBounds(latestBounds.current); setQuery(""); setSearchText(""); } }}><RefreshCw size={15} />Search this area</button>
+        <div className="map-search-status"><MapPin size={15} />Listings update as you move</div>
         {selectedHome ? <aside className="map-selected-home" aria-label="Selected property" aria-live="polite">
           <img src={selectedHome.photos[0]} alt="" />
           <div><strong>{selectedHome.title}</strong><p>{selectedHome.neighborhood}, {selectedHome.city}</p><AvailabilityNote home={selectedHome} now={now} compact /><span>{money(selectedHome.price)} <small>/ month · {selectedHome.priceBasis}</small></span><button className="text-link" onClick={() => openHome(selectedHome)}>View details<ArrowRight size={13} /></button></div>
