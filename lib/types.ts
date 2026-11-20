@@ -9,7 +9,7 @@ export type Listing = {
   reviewNote: string; createdAt: string; confirmedAt: string; isDemo?: boolean;
 };
 export type Session = { userId: string; displayName: string; email: string; isAdmin: boolean } | null;
-export type Inquiry = { id: string; listingId: string; listingTitle: string; ownerId: string; renterId: string; renterName: string; renterEmail: string; message: string; moveIn: string; occupants: number; reply: string; isDemo: number; createdAt: string };
+export type Inquiry = { id: string; listingId: string; listingTitle: string; ownerId: string; renterId: string; renterName: string; renterEmail: string; message: string; moveIn: string; occupants: number; reply: string; isDemo: number; createdAt: string; lastMessage?: { body: string; senderName: string; role: "owner" | "renter" | "reviewer"; createdAt: string } | null };
 export type Report = { id: string; listingId: string; userId: string; reason: string; status: string; createdAt: string };
 export type AppData = { session: Session; listings: Listing[]; myListings: Listing[]; reviewListings: Listing[]; savedIds: string[]; inquiries: Inquiry[]; reports: Report[]; pilot?: import("./pilot-limits").PilotStatus };
 export const money = (amount: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 }).format(amount);

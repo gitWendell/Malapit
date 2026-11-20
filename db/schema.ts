@@ -14,6 +14,12 @@ export const inquiries = sqliteTable("inquiries", {
   occupants: integer("occupants").notNull(), reply: text("reply").notNull().default(""),
   isDemo: integer("is_demo").notNull().default(0), createdAt: text("created_at").notNull(),
 });
+export const inquiryMessages = sqliteTable("inquiry_messages", {
+  seq: integer("seq").primaryKey({ autoIncrement: true }), id: text("id").notNull().unique(),
+  inquiryId: text("inquiry_id").notNull().references(() => inquiries.id, { onDelete: "cascade" }),
+  senderId: text("sender_id").notNull(), senderName: text("sender_name").notNull(), role: text("role").notNull(),
+  body: text("body").notNull(), createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(),
+}, table => [index("inquiry_messages_thread").on(table.inquiryId, table.seq), index("inquiry_messages_sender_day").on(table.senderId, table.createdDay), check("inquiry_message_role", sql`${table.role} IN ('owner','renter','reviewer')`), check("inquiry_message_body", sql`length(trim(${table.body})) BETWEEN 1 AND 2000`)]);
 export const reports = sqliteTable("reports", { id: text("id").primaryKey(), listingId: text("listing_id").notNull(), userId: text("user_id").notNull(), reason: text("reason").notNull(), status: text("status").notNull().default("open"), createdAt: text("created_at").notNull() });
 export const media = sqliteTable("media", { id: text("id").primaryKey(), ownerId: text("owner_id").notNull(), contentType: text("content_type").notNull(), createdAt: text("created_at").notNull(), byteSize: integer("byte_size").notNull().default(0), state: text("state").notNull().default("ready") });
 export const uploadUsage = sqliteTable("upload_usage", { ownerId: text("owner_id").notNull(), day: text("day").notNull(), attempts: integer("attempts").notNull().default(0) }, table => [primaryKey({ columns: [table.ownerId, table.day] })]);
