@@ -40,6 +40,21 @@ test('editing preserves saved amounts including zero and fractional floor area',
   assert.deepEqual(listingNumbers(initialListingNumbers(initial)),initial);
 });
 
+test('unknown floor area stays blank and is saved as unknown rather than zero', () => {
+  const draft=initialListingNumbers({area:null});
+  assert.equal(draft.area,'');
+  const values=listingNumbers({...draft,price:'1000'});
+  assert.equal(values.area,null);
+  assert.equal(values.deposit,0);
+});
+
+test('an existing floor area can be removed without changing other listing numbers', () => {
+  const draft=initialListingNumbers({price:15000,area:28.5});
+  draft.area='';
+  assert.equal(listingNumbers(draft).area,null);
+  assert.equal(listingNumbers(draft).price,15000);
+});
+
 test('location confirmation requires a city, barangay, and property pin', () => {
   const placed={city:'Cebu City',neighborhood:'Lahug',lat:10.33,lng:123.90};
   assert.equal(listingLocationError(placed),null);

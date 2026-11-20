@@ -200,7 +200,7 @@ function PropertyCard({ home, now, selected, saved, onSave, onLocate, onOpen, on
       <div className="card-price"><strong>{money(home.price)}</strong><span>/ month</span><small>{home.priceBasis}</small></div>
       <div className="card-title-row"><span className="card-type">{home.type}</span><span className="card-open-icon"><MapPin size={15} /></span></div>
       <h3>{home.title}</h3><p className="card-location"><MapPin size={13} />{home.neighborhood}, {home.city}</p>
-      <div className="card-specs"><span><BedDouble size={15} />{home.bedrooms === 0 ? "Studio" : `${home.bedrooms} bed`}</span><span><Bath size={15} />{home.bathrooms} bath</span><span><Maximize size={13} />{home.area} m²</span></div>
+      <div className="card-specs"><span><BedDouble size={15} />{home.bedrooms === 0 ? "Studio" : `${home.bedrooms} bed`}</span><span><Bath size={15} />{home.bathrooms} bath</span>{home.area != null && home.area > 0 && <span><Maximize size={13} />{home.area} m²</span>}</div>
       <AvailabilityNote home={home} now={now} />
       <div className="card-features">{home.amenities.filter(a => ["Furnished", "Pet friendly", "Parking", "Wi-Fi"].includes(a)).slice(0, 2).map(a => <span key={a}>{a}</span>)}</div>
     </button>

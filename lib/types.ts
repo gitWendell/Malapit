@@ -3,7 +3,7 @@ export const AMENITIES = ["Wi-Fi", "Air conditioning", "Pet friendly", "Parking"
 export type ListingStatus = "pending" | "published" | "paused" | "rented" | "changes_requested" | "withdrawn";
 export type Listing = {
   id: string; ownerId: string; ownerName: string; title: string; city: string; neighborhood: string; address: string; lat: number; lng: number;
-  type: string; price: number; priceBasis: string; bedrooms: number; bathrooms: number; area: number; description: string;
+  type: string; price: number; priceBasis: string; bedrooms: number; bathrooms: number; area: number | null; description: string;
   photos: string[]; amenities: string[]; deposit: number; advance: number; monthlyFees: number; utilities: string;
   minLease: number; availableFrom: string; role: string; exactLocation: boolean; status: ListingStatus;
   reviewNote: string; createdAt: string; confirmedAt: string; isDemo?: boolean;

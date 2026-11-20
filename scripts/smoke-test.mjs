@@ -45,8 +45,10 @@ try {
   const ownedPhoto = await request(photo.data.url, owner); expect(ownedPhoto, 200, "Owner can read their photo"); assert.match(ownedPhoto.headers.get("cache-control"), /no-store/);
   expect(await request(photo.data.url, outsider, "DELETE"), 403, "Other owners cannot delete photos");
   const input = { title: "QA lifecycle test apartment", city: "Makati", neighborhood: "Test neighborhood", address: "Private test building, private street, Makati", lat: 14.554321, lng: 121.024678, type: "Apartment", price: 12000, priceBasis: "entire unit", bedrooms: 1, bathrooms: 1, area: 28, description: "A fictional property created only for the local authorization and listing lifecycle smoke test.", photos: [photo.data.url], amenities: ["Own meter", "Kitchen"], deposit: 24000, advance: 12000, monthlyFees: 0, utilities: "Separate utility bills, test data only.", minLease: 6, availableFrom: "2026-12-01", role: "Direct owner", exactLocation: false, authorityConfirmed: true };
-  const created = await request("/api/listings", owner, "POST", input); expect(created, 201, "Owner submission saved"); listingId = created.data.id;
+  for (const area of [0, -1, 10001, "unknown"]) expect(await request("/api/listings", owner, "POST", { ...input, area }), 400, "Provided floor area must be valid");
+  const created = await request("/api/listings", owner, "POST", { ...input, area: undefined }); expect(created, 201, "Owner submission without floor area saved"); listingId = created.data.id;
   const pending = await request("/api/data", owner); assert(pending.data.myListings.some(p => p.id === listingId && p.status === "pending")); assert(!pending.data.listings.some(p => p.id === listingId)); checks++;
+  assert.equal(pending.data.myListings.find(p => p.id === listingId).area, null); checks++;
   expect(await request(photo.data.url, outsider), 404, "Pending listing photos are private");
   expect(await request(photo.data.url, admin), 200, "Reviewer can see pending photos");
   expect(await request(photo.data.url, owner, "DELETE"), 409, "Referenced photos cannot be deleted");
@@ -56,6 +58,7 @@ try {
   expect(await request(`/api/listings/${listingId}`, admin, "PATCH", { action: "approve" }), 200, "Admin approval succeeds");
   expect(await request(photo.data.url, null), 200, "Published listing photos are public");
   const publicData = await request("/api/data", null); const visible = publicData.data.listings.find(p => p.id === listingId); assert(visible); assert(!visible.address.includes("Private")); assert.notEqual(visible.lat, input.lat); assert.notEqual(visible.lng, input.lng); checks++;
+  assert.equal(visible.area, null); checks++;
   const privateData = await request("/api/data", owner); assert.equal(privateData.data.myListings.find(p => p.id === listingId).address, input.address); checks++;
   expect(await request("/api/saved", renter, "POST", { listingId, saved: true }), 200, "Saving a property succeeds");
   assert((await request("/api/data", renter)).data.savedIds.includes(listingId)); assert(!(await request("/api/data", outsider)).data.savedIds.includes(listingId)); checks++;
@@ -90,6 +93,9 @@ try {
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "resubmit" }), 200, "Owner can resubmit");
   expect(await request(`/api/listings/${listingId}`, admin, "PATCH", { action: "reject", reason: "QA review: please clarify the address." }), 200, "Reviewer can request changes");
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "update", data: { ...input, title: "QA corrected test apartment" } }), 200, "Edit returns listing to review");
+  assert.equal((await request("/api/data", owner)).data.myListings.find(p => p.id === listingId).area, 28); checks++;
+  expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "update", data: { ...input, area: null, title: "QA corrected test apartment" } }), 200, "Owner can clear a saved floor area");
+  assert.equal((await request("/api/data", owner)).data.myListings.find(p => p.id === listingId).area, null); checks++;
   expect(await request(`/api/listings/${listingId}`, admin, "PATCH", { action: "approve" }), 200, "Corrected listing can be approved");
   expect(await request(`/api/listings/${listingId}`, owner, "PATCH", { action: "rent" }), 200, "Owner can mark rented");
   assert(!(await request("/api/data", null)).data.listings.some(p => p.id === listingId)); checks++;

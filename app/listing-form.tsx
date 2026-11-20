@@ -24,7 +24,7 @@ export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edi
   const field = (key: ListingNumberField, label: string) => {
     const rules = LISTING_NUMBER_RULES[key];
     if (["price", "deposit", "advance", "monthlyFees"].includes(key)) return <ListingMoneyInput name={key} label={label} value={draft[key]} min={rules.min} max={rules.max} optional={rules.optional} onChange={value => update(key, value)} />;
-    return <label className="field"><span>{label}</span><input name={key} aria-label={label} type="number" inputMode={key === "area" ? "decimal" : "numeric"} min={rules.min} max={rules.max} step={rules.step} required={!rules.optional} placeholder={rules.optional ? "Optional" : key === "price" ? "e.g. 10000" : undefined} value={draft[key]} onChange={event => update(key, event.target.value)} onBlur={event => update(key, normalizeNumberText(event.target.value))} /></label>;
+    return <label className="field"><span>{label}</span><input name={key} aria-label={label} type="number" inputMode={key === "area" ? "decimal" : "numeric"} min={rules.min} max={rules.max} step={rules.step} required={!rules.optional} placeholder={key === "area" ? "Leave blank if unknown" : rules.optional ? "Optional" : undefined} value={draft[key]} onChange={event => update(key, event.target.value)} onBlur={event => update(key, normalizeNumberText(event.target.value))} /></label>;
   };
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.currentTarget, files = Array.from(input.files || []);
@@ -84,7 +84,7 @@ export default function ListingForm({ edit, pilot, onClose, onSubmitted }: { edi
         <label className="field"><span>Your role</span><select value={draft.role} onChange={e => update("role", e.target.value)}><option>Direct owner</option><option>Authorized manager</option><option>Licensed broker</option></select></label>
         {field("price", "Monthly rent (₱)")}
         <label className="field"><span>Price is for</span><select value={draft.priceBasis} onChange={e => update("priceBasis", e.target.value)}><option value="entire unit">The entire unit</option><option value="per room">One room</option><option value="per person">One person / bedspace</option></select></label>
-        {field("bedrooms", "Bedrooms (0 for studio)")}{field("bathrooms", "Bathrooms")}{field("area", "Floor area (m²)")}
+        {field("bedrooms", "Bedrooms (0 for studio)")}{field("bathrooms", "Bathrooms")}{field("area", "Floor area (m²) (optional)")}
       </div>}
       {step === 1 && <ListingLocation value={draft} editing={Boolean(edit)} onConfirm={confirmLocation} onChange={patch => { setDraft(previous => ({ ...previous, ...patch })); setError(""); }} />}
       {step === 2 && <div className="form-grid">
