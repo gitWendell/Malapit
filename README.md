@@ -114,3 +114,12 @@ The service worker caches only generic offline help. Account pages, APIs, photos
 The map uses [OpenStreetMap tiles](https://operations.osmfoundation.org/policies/tiles/) for low-traffic testing, with attribution and no bulk or offline downloading. Choose a suitable map provider before scaling. Photo sources are in `public/homes/sources.json`. The self-hosted Figtree font and its SIL Open Font License are in `public/fonts/`. Third-party licenses remain with their files.
 
 Before a commercial launch, complete the operating and legal review in [the business research](docs/rental-business-research.md), define retention and abandoned-upload cleanup, and operate a real listing review process.
+
+
+### From an inquiry to rent payments
+
+A real listing owner can choose **Set up rental** in an inquiry. The property address and rent are prefilled; the owner confirms rental dates and the first bill (rent only, up to 31 covered days). The invitation targets the original renter account, without retyping an email. The renter chooses **Review rental → Accept and view bill**. Acceptance atomically connects the private rental, issues the disclosed first bill, and marks the public listing rented. Decline/revoke/expiry do not issue bills. Existing units and invitations remain supported. The listing-to-unit link prevents duplicate private units when a listing gets another renter later; offers and old bills retain their snapshots.
+
+The renter can reopen the bill from the inquiry or **My Rentals → I’m renting → View rent bill**. Payment remains a direct transfer to the owner, followed by a payment report and owner confirmation. This flow does not charge an account, sign a lease, enable online checkout, or include deposits/utilities. Automatic future calendar-month bills still require the owner's existing billing setup.
+
+Local integration check: `node scripts/inquiry-rental-handoff-smoke-test.mjs` with the built local Worker on port 5188. It uses fictional isolated accounts and removes its records.

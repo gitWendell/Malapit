@@ -57,6 +57,13 @@
       "when": 1795144929950,
       "tag": "0007_inquiry_conversations",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1795146615025,
+      "tag": "0008_inquiry_rental_handoff",
+      "breakpoints": true
     }
   ]
 }

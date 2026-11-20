@@ -4,6 +4,7 @@ import { LoaderCircle, MessageCircle, RefreshCw, Send } from "lucide-react";
 import { api } from "../lib/client";
 import type { AppData, Inquiry } from "../lib/types";
 import type { InquiryMessage, InquiryMessagesPage } from "../lib/inquiry-messages";
+import InquiryRentalAction from "./inquiry-rental-action";
 import { Empty } from "./ui";
 import "./inquiry-inbox.css";
 
@@ -78,6 +79,7 @@ function ConversationCard({ item, userId, open, toggle, refresh, notify }: { ite
   return <article className={`inquiry-item conversation-card ${open ? "is-open" : ""}`}>
     <div className="inquiry-item-heading"><span className="lister-avatar"><MessageCircle size={22} /></span><div><span className="eyebrow">{item.isDemo ? "DEMO INQUIRY" : item.renterId === userId ? "YOUR INQUIRY" : "RENTER INQUIRY"}</span><h3>{item.listingTitle}</h3></div><time>{new Date(item.createdAt).toLocaleDateString("en-PH", { timeZone: "Asia/Manila" })}</time></div>
     <div className="inquiry-message"><strong>{item.renterName}</strong><p>{item.message}</p><span>Move-in: {item.moveIn} · {item.occupants} occupant{item.occupants > 1 ? "s" : ""}</span></div>
+    <InquiryRentalAction item={item} userId={userId} refresh={refresh} />
     {!open && (preview || item.reply) && <div className="inquiry-reply"><strong>{preview ? `${preview.senderName} · ${preview.role === "owner" ? "Lister" : preview.role === "renter" ? "Renter" : "Reviewer"}` : "Lister reply"}</strong><p>{preview?.body || item.reply}</p></div>}
     <div className="conversation-actions"><button className="button primary" aria-expanded={open} onClick={toggle}><MessageCircle size={16} />{open ? "Hide conversation" : preview || item.reply ? "Reply" : item.renterId === userId ? "Open conversation" : "Reply to renter"}</button></div>
     {open && <section className="conversation-thread" aria-label={`Conversation about ${item.listingTitle}`}>

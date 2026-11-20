@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+const base='http://127.0.0.1:5188',run=crypto.randomUUID().slice(0,8),listing=crypto.randomUUID(),photo=crypto.randomUUID();
+const person=role=>({id:`qa-handoff-${role}-${run}`,name:`QA ${role}`,email:`qa-handoff-${role}-${run}@sites.test`});
+const owner=person('owner'),renter=person('renter'),other=person('other'),reviewer={id:'local_seedy',name:'Reviewer',email:'local_seedy@sites.test'};
+const quote=v=>"'"+String(v).replaceAll("'","''")+"'";
+function localSql(sql){return execFileSync(process.execPath,['--import','./scripts/sites-env.mjs','./node_modules/wrangler/bin/wrangler.js','d1','execute','DB','--local','--config','dist/server/wrangler.json','--persist-to','.wrangler/state','--command',sql],{cwd:new URL('..',import.meta.url),stdio:'pipe'});}
+let checks=0;
+async function request(path,user,method='GET',body,origin=base){const headers={};if(user){headers['oai-authenticated-user-id']=user.id;headers['oai-authenticated-user-email']=user.email;headers['oai-authenticated-user-full-name']=user.name;}if(method!=='GET')headers.origin=origin;if(body!==undefined)headers['content-type']='application/json';const response=await fetch(base+path,{method,headers,...(body===undefined?{}:{body:JSON.stringify(body)})});return {status:response.status,data:await response.json(),headers:response.headers};}
+const expect=(result,status,label)=>{assert.equal(result.status,status,label+': '+JSON.stringify(result.data));checks++;return result.data;};
+const verify=(condition,label)=>{assert.ok(condition,label);checks++;};
+try{
+ const home={title:'QA handoff '+run,city:'Cebu City',type:'Apartment',price:8000,address:'Fictional street, Lahug, Cebu City',neighborhood:'Lahug',photos:['/api/media/'+photo],lat:10.333,lng:123.902,exactLocation:false,amenities:[],area:null,description:'Fictional local QA property',monthlyFees:0,deposit:0,advance:0};
+ const now=new Date().toISOString();
+ localSql(`INSERT INTO media(id,owner_id,content_type,created_at,byte_size) VALUES(${quote(photo)},${quote(owner.id)},'image/jpeg',${quote(now)},100); INSERT INTO listings(id,owner_id,owner_name,title,city,status,data,created_at,confirmed_at) VALUES(${quote(listing)},${quote(owner.id)},'QA owner',${quote(home.title)},'Cebu City','published',${quote(JSON.stringify(home))},${quote(now)},${quote(now)});`);
+ const inquiry=expect(await request('/api/inquiries',renter,'POST',{listingId:listing,message:'We agreed on the rent after the fictional viewing.',moveIn:'2026-12-01',occupants:1}),201,'Inquiry saved');
+ const path=`/api/inquiries/${inquiry.id}/rental`;
+ expect(await request(path,null),401,'Anonymous setup blocked');expect(await request(path,renter),404,'Renter cannot create owner terms');expect(await request(path,reviewer),404,'Reviewer cannot set terms for another owner');
+ const setup=expect(await request(path,owner),200,'Owner gets prefilled terms');verify(setup.terms.monthlyRentCents===800000&&setup.terms.address===home.address,'Listing price and exact owner address prefilled');
+ const data={requestId:crypto.randomUUID(),terms:setup.terms,firstBill:setup.firstBill,sharingConfirmed:true};
+ expect(await request(path,owner,'POST',{...data,sharingConfirmed:false}),400,'Sharing confirmation required');expect(await request(path,owner,'POST',data,'https://untrusted.invalid'),403,'Cross-site setup blocked');expect(await request(path,renter,'POST',data),404,'Renter cannot impersonate owner');
+ expect(await request(path,owner,'POST',{...data,firstBill:{...data.firstBill,periodStart:'2026-11-30'}}),400,'Bad covered dates blocked');
+ const raced=await Promise.all([request(path,owner,'POST',data),request(path,owner,'POST',data)]);for(const result of raced)expect(result,201,'Repeated setup safely creates one rental');verify(raced[0].data.id===raced[1].data.id,'Repeated setup returns same connection');
+ const id=raced[0].data.id,connectionPath='/api/rentals/connections/'+id;
+ expect(await request(path,owner,'POST',{...data,terms:{...data.terms,monthlyRentCents:900000}}),409,'Cannot overwrite sent rent terms');
+ const otherInquiry=expect(await request('/api/inquiries',other,'POST',{listingId:listing,message:'Different prospective renter.',moveIn:'2026-12-01',occupants:1}),201,'Second prospect inquiry saved');
+ expect(await request(`/api/inquiries/${otherInquiry.id}/rental`,owner,'POST',{...data,requestId:crypto.randomUUID()}),409,'Cannot offer one unit to two renters simultaneously');
+ const pending=expect(await request('/api/rentals',renter),200,'Renter finds offer in My Rentals');verify(pending.myConnections.some(row=>row.id===id&&row.status==='pending'),'Pending rental appears in correct account');
+ const detail=expect(await request(connectionPath,renter),200,'Renter reviews terms and first bill');verify(detail.firstBill.amountCents===800000&&detail.bills.length===0,'First bill is disclosed but not issued before acceptance');
+ expect(await request(connectionPath,other),404,'Other renter cannot read private offer');expect(await request(connectionPath,reviewer),404,'Reviewer cannot read private rental');expect(await request(connectionPath,{...other,email:renter.email}),404,'Same email on a different account cannot take inquiry offer');
+ verify(!expect(await request('/api/rentals',{...other,email:renter.email}),200,'Other account scoped invitation list').myConnections.some(c=>c.id===id),'Invitation tied to original renter account');
+ const inbox=expect(await request('/api/data',renter),200,'Renter inbox reads handoff').inquiries.find(row=>row.id===inquiry.id);verify(inbox.rental.connectionId===id&&inbox.rental.status==='pending','Inquiry links exact pending rental');
+ expect(await request(connectionPath,owner,'PATCH',{action:'accept',detailsConfirmed:true,firstBillConfirmed:true}),403,'Owner cannot accept on renter behalf');expect(await request(connectionPath,renter,'PATCH',{action:'accept',detailsConfirmed:false}),400,'Renter must check terms');
+ expect(await request(connectionPath,renter,'PATCH',{action:'accept',detailsConfirmed:true}),400,'Old client cannot accept without reviewing first bill');
+ const accepts=await Promise.all([request(connectionPath,renter,'PATCH',{action:'accept',detailsConfirmed:true,firstBillConfirmed:true}),request(connectionPath,renter,'PATCH',{action:'accept',detailsConfirmed:true,firstBillConfirmed:true})]);for(const result of accepts)expect(result,200,'Acceptance retry succeeds');const billId=accepts[0].data.billId;verify(!!billId&&billId===accepts[1].data.billId,'Acceptance opens one first bill');
+ const accepted=expect(await request(connectionPath,renter),200,'Accepted rental persisted');verify(accepted.bills.length===1&&accepted.connection.status==='accepted','One bill and connected rental saved together');
+ verify(expect(await request('/api/rentals',renter),200,'I am renting reads active rental').myConnections.some(row=>row.id===id&&row.status==='accepted'&&row.latestBillId===billId),'Property now appears in I am renting');
+ const publicData=expect(await request('/api/data',null),200,'Map still works');verify(!publicData.listings.some(row=>row.id===listing),'Accepted listing removed from available map');verify(expect(await request('/api/data',owner),200,'Owner listing scope').myListings.find(row=>row.id===listing).status==='rented','Listing marked rented');
+ const billPath='/api/rentals/bills/'+billId,bill=expect(await request(billPath,renter),200,'Renter opens payment screen');verify(bill.bill.remainingCents===800000&&bill.connection.unitName===home.type,'Bill has exact rent and unit');expect(await request(billPath,other),404,'Another renter cannot see bill');
+ const payment=expect(await request(billPath+'/payments',renter,'POST',{requestId:crypto.randomUUID(),amountCents:800000,method:'gcash',paidAt:new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'}),reference:'QA-HANDOFF-'+run,detailsConfirmed:true,receiptConfirmed:false}),201,'Renter reports fictional direct payment');
+ verify(expect(await request(billPath,renter),200,'Payment pending visible').bill.pendingCount===1,'Reported amount awaits owner confirmation');
+ expect(await request('/api/rentals/payments/'+payment.id,owner,'PATCH',{action:'confirm',receiptConfirmed:true}),200,'Owner confirms fictional receipt');
+ const paid=expect(await request(billPath,renter),200,'Renter reads settled bill');verify(paid.bill.remainingCents===0&&paid.bill.confirmedCents===800000,'Owner confirmation clears balance');
+ console.log(`PASS: ${checks} inquiry-to-rental-to-bill-to-payment checks.`);
+}finally{
+ assert.match(owner.id,/^qa-handoff-owner-[a-f0-9]{8}$/);
+ localSql(`DELETE FROM rental_payment_events WHERE payment_id IN(SELECT id FROM rental_payments WHERE owner_id=${quote(owner.id)}); DELETE FROM rental_payments WHERE owner_id=${quote(owner.id)}; DELETE FROM rental_bill_events WHERE bill_id IN(SELECT id FROM rental_bills WHERE owner_id=${quote(owner.id)}); DELETE FROM rental_bills WHERE owner_id=${quote(owner.id)}; DELETE FROM inquiry_rental_offers WHERE connection_id IN(SELECT id FROM rental_connections WHERE owner_id=${quote(owner.id)}); DELETE FROM rental_events WHERE connection_id IN(SELECT id FROM rental_connections WHERE owner_id=${quote(owner.id)}); DELETE FROM rental_connections WHERE owner_id=${quote(owner.id)}; DELETE FROM rental_listing_units WHERE listing_id=${quote(listing)}; DELETE FROM rental_units WHERE owner_id=${quote(owner.id)}; DELETE FROM inquiries WHERE listing_id=${quote(listing)}; DELETE FROM listings WHERE id=${quote(listing)} AND owner_id=${quote(owner.id)}; DELETE FROM media WHERE id=${quote(photo)} AND owner_id=${quote(owner.id)}; DELETE FROM upload_usage WHERE owner_id=${quote(owner.id)};`);
+ console.log('Removed this run’s fictional local records. No real account or payment was changed.');
+}

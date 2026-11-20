@@ -1,12 +1,13 @@
 import { env } from "cloudflare:workers";
-import { and, desc, eq, getTableColumns, gt, isNull, ne, or } from "drizzle-orm";
-import { rentalBills, rentalConnections, rentalEvents, rentalUnits } from "../db/schema";
+import { sql, and, desc, eq, getTableColumns, gt, isNull, ne, or } from "drizzle-orm";
+import { inquiryRentalOffers, rentalBills, rentalConnections, rentalEvents, rentalUnits } from "../db/schema";
 import { getDb, HttpError, routeError } from "./server";
 import type { AuthIdentity } from "./auth";
 import { effectiveRentalStatus, normalizeRentalEmail, philippinesDay, RENTAL_LIMITS, rentalConnectionAction, rentalCreateRequest, rentalInviteInput, rentalUnitAction, rentalUnitInput, type RentalConnection, type RentalsData } from "./rentals";
 import { billBalanceColumns } from "./rental-payment-queries";
 import { billingForConnection } from "./rental-billing-server";
 
+const offerTarget = (userId: string) => sql`NOT EXISTS (SELECT 1 FROM inquiry_rental_offers o WHERE o.connection_id = rental_connections.id AND o.target_renter_id <> ${userId})`;
 const unavailable = () => new HttpError(404, "This rental record is not available to this account.");
 function database() { if (!env.DB) throw new HttpError(503, "My Rentals is temporarily unavailable."); return env.DB; }
 function validId(id: string) { if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(id)) throw unavailable(); }
@@ -34,9 +35,9 @@ export async function rentalsFor(user: AuthIdentity): Promise<RentalsData> {
   const [units, owned, mine] = await Promise.all([
     db.select().from(rentalUnits).where(eq(rentalUnits.ownerId, user.userId)).orderBy(desc(isNull(rentalUnits.archivedAt)), desc(rentalUnits.createdAt)).limit(100),
     db.select().from(rentalConnections).where(eq(rentalConnections.ownerId, user.userId)).orderBy(desc(eq(rentalConnections.status, "accepted")), desc(and(eq(rentalConnections.status, "pending"), gt(rentalConnections.expiresAt, now))!), desc(rentalConnections.createdAt)).limit(200),
-    db.select().from(rentalConnections).where(or(
+    db.select({ ...getTableColumns(rentalConnections), latestBillId: sql<string | null>`(SELECT b.id FROM rental_bills b WHERE b.connection_id = rental_connections.id AND b.status = 'issued' ORDER BY b.period_start DESC, b.created_at DESC, b.id DESC LIMIT 1)` }).from(rentalConnections).where(or(
       eq(rentalConnections.renterId, user.userId),
-      and(eq(rentalConnections.status, "pending"), eq(rentalConnections.inviteEmail, normalizeRentalEmail(user.email)), gt(rentalConnections.expiresAt, now), ne(rentalConnections.ownerId, user.userId)),
+      and(eq(rentalConnections.status, "pending"), eq(rentalConnections.inviteEmail, normalizeRentalEmail(user.email)), gt(rentalConnections.expiresAt, now), ne(rentalConnections.ownerId, user.userId), offerTarget(user.userId)),
     )).orderBy(desc(eq(rentalConnections.status, "accepted")), desc(eq(rentalConnections.status, "pending")), desc(rentalConnections.createdAt)).limit(100),
   ]);
   return { units, ownedConnections: owned.map(connection), myConnections: mine.map(connection), limits: RENTAL_LIMITS };
@@ -52,7 +53,8 @@ async function accessibleConnection(id: string, user: AuthIdentity) {
   validId(id);
   const [row] = await getDb().select().from(rentalConnections).where(eq(rentalConnections.id, id)).limit(1);
   if (!row) throw unavailable();
-  const intended = row.status === "pending" && row.expiresAt > new Date().toISOString() && row.inviteEmail === normalizeRentalEmail(user.email);
+  const [offer] = await getDb().select().from(inquiryRentalOffers).where(eq(inquiryRentalOffers.connectionId, id)).limit(1);
+  const intended = (!offer || offer.targetRenterId === user.userId) && row.status === "pending" && row.expiresAt > new Date().toISOString() && row.inviteEmail === normalizeRentalEmail(user.email);
   if (row.ownerId !== user.userId && row.renterId !== user.userId && !intended) throw unavailable();
   return row;
 }
@@ -63,7 +65,7 @@ export async function rentalConnectionFor(id: string, user: AuthIdentity) {
     getDb().select().from(rentalEvents).where(eq(rentalEvents.connectionId, id)).orderBy(desc(rentalEvents.createdAt)).limit(30),
     getDb().select({ ...getTableColumns(rentalBills), ...billBalanceColumns }).from(rentalBills).where(and(eq(rentalBills.connectionId, id), or(eq(rentalBills.ownerId, user.userId), eq(rentalBills.renterId, user.userId)))).orderBy(desc(rentalBills.month), desc(rentalBills.createdAt)).limit(12),
   ]);
-  return { connection: connection(row), events, bills, billing: await billingForConnection(connection(row)) };
+  return { connection: connection(row), events, bills, firstBill: (await getDb().select().from(inquiryRentalOffers).where(eq(inquiryRentalOffers.connectionId, id)).limit(1))[0] || null, billing: await billingForConnection(connection(row)) };
 }
 
 export async function createRentalUnit(input: unknown, user: AuthIdentity) {
@@ -114,8 +116,12 @@ export async function changeRentalConnection(id: string, input: unknown, user: A
   const owner = row.ownerId === user.userId;
   if (data.action === "accept" || data.action === "decline") {
     const target = data.action === "accept" ? "accepted" : "declined";
-    if (!owner && row.renterId === user.userId && row.status === target) return { id };
+    if (!owner && row.renterId === user.userId && row.status === target) return connectionResult(id, target);
     if (owner || row.inviteEmail !== normalizeRentalEmail(user.email)) throw new HttpError(403, "Only the invited renter can respond.");
+    if (data.action === "accept") {
+      const [offer] = await getDb().select({ id: inquiryRentalOffers.connectionId }).from(inquiryRentalOffers).where(eq(inquiryRentalOffers.connectionId, id)).limit(1);
+      if (offer && !data.firstBillConfirmed) throw new HttpError(400, "Review the first rent bill and confirm it before accepting. Refresh this page to see the latest rental details.");
+    }
     if (row.status !== "pending" || row.expiresAt <= now) throw new HttpError(409, "This invitation is no longer available.");
     if (data.action === "accept" && row.leaseEnd && row.leaseEnd < philippinesDay()) throw new HttpError(409, "The rental dates have passed. Ask the owner for an updated invitation.");
     const changed = await db.prepare("UPDATE rental_connections SET status = ?, renter_id = ?, renter_name = ?, renter_email = ?, responded_at = ? WHERE id = ? AND status = 'pending' AND expires_at > ? AND invite_email = ? AND owner_id <> ? RETURNING id")
@@ -138,7 +144,12 @@ export async function changeRentalConnection(id: string, input: unknown, user: A
       if (current.status !== "ended") throw new HttpError(409, "This connection changed. Refresh My Rentals.");
     }
   }
-  return { id };
+  return connectionResult(id, data.action === "accept" ? "accepted" : "other");
+}
+
+async function connectionResult(id: string, status: string) {
+  const [offer] = await getDb().select({ billId: inquiryRentalOffers.firstBillId }).from(inquiryRentalOffers).where(eq(inquiryRentalOffers.connectionId, id)).limit(1);
+  return { id, billId: status === "accepted" ? offer?.billId || null : null };
 }
 
 export function rentalError(error: unknown): Response {
@@ -146,6 +157,9 @@ export function rentalError(error: unknown): Response {
   let details = "";
   for (let cause = error, depth = 0; cause instanceof Error && depth < 5; depth++, cause = cause.cause) details += " " + cause.message;
   const rules: [string, number, string][] = [
+    ["RENTAL_OFFER_INVALID", 409, "This inquiry or listing changed. Refresh before setting up the rental."],
+    ["RENTAL_OFFER_TARGET", 403, "Only the renter who made this inquiry can accept this rental."],
+    ["UNIQUE constraint failed: rental_listing_units", 409, "This listing already has a rental setup. Refresh your inquiries."],
     ["RENTAL_SCHEDULE_STATE", 409, "This automatic billing setup changed. Refresh the rental and review its dates."],
     ["RENTAL_SCHEDULE_CONNECTION", 409, "Automatic bills need an open accepted rental and a full calendar month within its agreed dates."],
     ["RENTAL_SCHEDULE_FULL", 409, "Automatic billing has reached the testing limit. Please contact Malapit."],

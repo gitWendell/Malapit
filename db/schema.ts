@@ -99,3 +99,16 @@ export const rentalBillSchedules = sqliteTable("rental_bill_schedules", {
   createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(), updatedBy: text("updated_by").notNull(),
   lastCheckedAt: text("last_checked_at"), lastBillId: text("last_bill_id").references(() => rentalBills.id),
 }, table => [index("rental_bill_schedules_due").on(table.status, table.nextMonth), index("rental_bill_schedules_owner").on(table.ownerId, table.status), check("rental_schedule_status", sql`${table.status} IN ('enabled','paused','attention','finished')`)]);
+
+// Link a public listing to one private unit and retain each renter's offer snapshot.
+export const rentalListingUnits = sqliteTable("rental_listing_units", {
+  listingId: text("listing_id").primaryKey().references(() => listings.id),
+  unitId: text("unit_id").notNull().unique().references(() => rentalUnits.id),
+});
+export const inquiryRentalOffers = sqliteTable("inquiry_rental_offers", {
+  connectionId: text("connection_id").primaryKey().references(() => rentalConnections.id),
+  inquiryId: text("inquiry_id").notNull().references(() => inquiries.id),
+  targetRenterId: text("target_renter_id").notNull(), firstBillId: text("first_bill_id").notNull().unique(),
+  amountCents: integer("amount_cents").notNull(), periodStart: text("period_start").notNull(),
+  periodEnd: text("period_end").notNull(), dueDate: text("due_date").notNull(), note: text("note").notNull().default(""),
+}, table => [index("inquiry_rental_offer_thread").on(table.inquiryId), check("inquiry_rental_offer_amount", sql`${table.amountCents} BETWEEN 1 AND 100000000`)]);

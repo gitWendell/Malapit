@@ -31,14 +31,14 @@ export const rentalUnitAction = z.discriminatedUnion("action", [
 export const rentalInviteInput = z.object({ unitId: z.string().uuid(), unitVersion: text(1, 40), email: z.string().trim().email().max(254).transform(normalizeRentalEmail), sharingConfirmed: z.literal(true) });
 export const rentalCreateRequest = z.object({ requestId: z.string().uuid().optional() });
 export const rentalConnectionAction = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("accept"), detailsConfirmed: z.literal(true) }),
+  z.object({ action: z.literal("accept"), detailsConfirmed: z.literal(true), firstBillConfirmed: z.boolean().default(false) }),
   z.object({ action: z.enum(["decline", "revoke", "end"]), confirmed: z.literal(true) }),
 ]);
 
 export type RentalStatus = "pending" | "accepted" | "declined" | "revoked" | "expired" | "ended";
 export type RentalUnit = z.infer<typeof rentalUnitInput> & { id: string; ownerId: string; createdAt: string; updatedAt: string; archivedAt: string | null };
 export type RentalConnection = z.infer<typeof rentalUnitInput> & {
-  id: string; unitId: string; ownerId: string; ownerName: string; ownerEmail: string; inviteEmail: string;
+  latestBillId?: string | null; id: string; unitId: string; ownerId: string; ownerName: string; ownerEmail: string; inviteEmail: string;
   renterId: string | null; renterName: string | null; renterEmail: string | null; status: RentalStatus;
   createdAt: string; expiresAt: string; respondedAt: string | null; endedAt: string | null; endedBy: string | null;
 };
