@@ -4,6 +4,8 @@ import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 import { createRequestAuth, safeReturnPath } from "../lib/auth";
 import { runWithIdentity } from "../lib/auth-context";
 import { runScheduledRentBills } from "../lib/rental-billing-jobs";
+import { createRentReminders, dispatchNotifications, notificationMaintenance, pushConfiguration } from "../lib/notification-jobs";
+import { pushDeviceCookie, removePushDevice } from "../lib/notifications-server";
 import { serveTutorialVideo, TUTORIAL_VIDEO_PATH } from "../lib/tutorial-video";
 import tutorialMedia from "../public/tutorial/malapit-how-to-media.json";
 
@@ -12,6 +14,10 @@ const worker = {
     if (!env.DB) throw new Error("The billing database is unavailable.");
     const result = await runScheduledRentBills(env.DB, new Date(controller.scheduledTime));
     console.log("Malapit automatic billing", JSON.stringify(result));
+    const now=new Date(controller.scheduledTime);
+    await notificationMaintenance(env.DB,now);
+    await createRentReminders(env.DB,now);
+    await dispatchNotifications(env.DB,pushConfiguration(env),now);
   },
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
     const url = new URL(request.url);
@@ -32,18 +38,22 @@ const worker = {
       const signOut = url.pathname === "/auth/signout";
       if (!auth.local && !signOut && !auth.ready) return auth.response(new Response("Sign-in is being prepared. Please try again later.", { status: 503 }));
       let location = safeReturnPath(url.searchParams.get("return_to"));
-      if (signOut) await auth.signOut();
+      if (signOut) {
+        // The device cookie is an opaque, HttpOnly capability for this browser.
+        // Stop its deliveries before dropping the session, including expired sessions.
+        try { await removePushDevice(request); } catch { console.warn("Device cleanup was unavailable during sign-out. Private push content still requires the current session."); }
+        await auth.signOut();
+      }
       else if (!auth.local) {
         try { location = await auth.signIn(location); }
         catch { return auth.response(new Response(null, { status: 302, headers: { Location: "/?auth=failed" } })); }
       }
-      return auth.response(new Response(null, { status: 302, headers: {
-        Location: location,
-        "Cache-Control": "private, no-store",
-        ...(auth.local ? { "Set-Cookie": `__malapit_local_auth=${signOut ? "" : ["renter", "other"].includes(url.searchParams.get("test_as") ?? "") ? url.searchParams.get("test_as") : "1"}; Path=/; HttpOnly; SameSite=Lax${signOut ? "; Max-Age=0" : ""}` } : {}),
-      } }));
+      const redirectHeaders=new Headers({Location:location,"Cache-Control":"private, no-store"});
+      if(signOut)redirectHeaders.append("Set-Cookie",pushDeviceCookie(null,request));
+      if(auth.local)redirectHeaders.append("Set-Cookie",`__malapit_local_auth=${signOut ? "" : ["renter", "other"].includes(url.searchParams.get("test_as") ?? "") ? url.searchParams.get("test_as") : "1"}; Path=/; HttpOnly; SameSite=Lax${signOut ? "; Max-Age=0" : ""}`);
+      return auth.response(new Response(null, { status:302, headers:redirectHeaders }));
     }
-    const user = await auth.identity(url.pathname === "/api/rentals" || url.pathname.startsWith("/api/rentals/"));
+    const user = await auth.identity(url.pathname === "/api/rentals" || url.pathname.startsWith("/api/rentals/") || url.pathname === "/api/notifications" || url.pathname.startsWith("/api/notifications/"));
     let binding = ctx.props?.CONNECTORS;
     // Local preview emulates the same request-scoped capability. This branch and
     // the auxiliary service binding are absent from production builds.
@@ -64,6 +74,9 @@ const worker = {
       };
     }
     const response = await runWithIdentity(user, () => runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx)));
+    if(env.DB&&user&&response.ok&&["POST","PATCH"].includes(request.method)&&(/^\/api\/(rentals|inquiries)(\/|$)/.test(url.pathname)||url.pathname==="/api/notifications/push/test")){
+      ctx.waitUntil(dispatchNotifications(env.DB,pushConfiguration(env)).catch(()=>console.warn("Notification delivery will retry on the next scheduled check.")));
+    }
     return auth.response(response);
   },
 };
