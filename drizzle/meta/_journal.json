@@ -78,6 +78,20 @@
       "when": 1795167961888,
       "tag": "0010_owner_receiving_details",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1795403992488,
+      "tag": "0011_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1795404820828,
+      "tag": "0012_notification_indexes",
+      "breakpoints": true
     }
   ]
 }

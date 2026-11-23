@@ -9,7 +9,7 @@ export async function runScheduledRentBills(db: D1Database, now = new Date()) {
   const rows = await db.prepare(`SELECT s.connection_id AS connectionId,s.owner_id AS ownerId,s.next_month AS nextMonth,s.version,
     c.status,c.renter_id AS renterId,c.lease_start AS leaseStart,c.lease_end AS leaseEnd,c.monthly_rent_cents AS monthlyRentCents,c.due_day AS dueDay
     FROM rental_bill_schedules s JOIN rental_connections c ON c.id=s.connection_id
-    WHERE s.status='enabled' AND s.next_month<=? ORDER BY s.next_month,s.connection_id LIMIT 12`).bind(month).all<JobRow>();
+    WHERE s.status='enabled' AND s.next_month<=? ORDER BY s.next_month,s.connection_id LIMIT 8`).bind(month).all<JobRow>();
   const summary = { checked: rows.results.length, created: 0, skipped: 0, attention: 0, finished: 0 };
   async function stop(row: JobRow, issue: string, finished = false) {
     const result = await db.prepare(`UPDATE rental_bill_schedules SET status=?,issue=?,last_checked_at=?,updated_at=?,updated_by='system',version=version+1

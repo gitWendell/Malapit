@@ -62,7 +62,7 @@ export const rentalBills = sqliteTable("rental_bills", {
 }, table => [
   uniqueIndex("rental_bill_live_month").on(table.connectionId, table.month).where(sql`${table.status} = 'issued'`),
   index("rental_bills_owner_month").on(table.ownerId, table.month, table.dueDate), index("rental_bills_renter_month").on(table.renterId, table.month, table.dueDate),
-  index("rental_bills_daily").on(table.ownerId, table.createdDay), index("rental_bills_period").on(table.connectionId, table.status, table.periodStart, table.periodEnd),
+  index("rental_bills_daily").on(table.ownerId, table.createdDay), index("rental_bills_period").on(table.connectionId, table.status, table.periodStart, table.periodEnd), index("rental_bills_notification_due").on(table.status,table.dueDate),
   check("rental_bill_amount", sql`${table.amountCents} BETWEEN 1 AND 100000000`),
   check("rental_bill_status", sql`${table.status} IN ('issued', 'voided')`),
 ]);
@@ -132,3 +132,19 @@ export const ownerPaymentMethods = sqliteTable("owner_payment_methods", {
   label: text("label").notNull().default(""), accountName: text("account_name").notNull().default(""), accountNumber: text("account_number").notNull().default(""), instructions: text("instructions").notNull().default(""),
   qrImageId: text("qr_image_id").references(() => ownerPaymentQrs.id), createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(), archivedAt: text("archived_at"),
 }, table => [index("owner_payment_methods_owner").on(table.ownerId,table.archivedAt),check("owner_payment_method_kind",sql`${table.kind} IN ('gcash','maya','bank','qr','cash','other')`)]);
+
+export const appNotifications = sqliteTable("app_notifications", {
+  id: text("id").primaryKey(), userId: text("user_id"), recipientEmail: text("recipient_email"),
+  kind: text("kind").notNull(), targetId: text("target_id").notNull(), createdAt: text("created_at").notNull(), readAt: text("read_at"),
+}, table => [index("notifications_user").on(table.userId,table.createdAt), index("notifications_email").on(table.recipientEmail,table.createdAt), index("notifications_created").on(table.createdAt), check("notification_recipient",sql`${table.userId} IS NOT NULL OR ${table.recipientEmail} IS NOT NULL`)]);
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: text("id").primaryKey(), userId: text("user_id").notNull(), email: text("email").notNull(),
+  endpoint: text("endpoint").notNull().unique(), p256dh: text("p256dh").notNull(), auth: text("auth").notNull(),
+  createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(),
+}, table => [index("push_subscriptions_user").on(table.userId), index("push_subscriptions_email").on(table.email)]);
+export const pushDeliveries = sqliteTable("push_deliveries", {
+  notificationId: text("notification_id").notNull().references(() => appNotifications.id,{onDelete:"cascade"}),
+  subscriptionId: text("subscription_id").notNull().references(() => pushSubscriptions.id,{onDelete:"cascade"}),
+  attempts: integer("attempts").notNull().default(0), nextAttemptAt: text("next_attempt_at").notNull(), leaseUntil: text("lease_until"),
+  sentAt: text("sent_at"), failedAt: text("failed_at"),
+}, table => [primaryKey({columns:[table.notificationId,table.subscriptionId]}), index("push_delivery_queue").on(table.sentAt,table.failedAt,table.nextAttemptAt)]);
