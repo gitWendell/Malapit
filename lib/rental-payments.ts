@@ -9,9 +9,12 @@ export const rentalPaymentInput = z.object({
   method: z.enum(["cash", "gcash", "maya", "bank", "other"]),
   paidAt: z.string().refine(isCivilDate, "Enter a valid payment date.").refine(value => value <= philippinesDay(), "A payment date cannot be in the future."),
   reference: z.string().trim().max(100).default(""), note: z.string().trim().max(500).default(""),
+  destinationId: z.string().uuid().optional(), destinationVersion: z.string().datetime().optional(),
   detailsConfirmed: z.literal(true), receiptConfirmed: z.boolean().default(false), duplicateReason: z.string().trim().max(400).default(""),
 }).superRefine((data, context) => {
+  if (!!data.destinationId !== !!data.destinationVersion) context.addIssue({code:"custom",path:["destinationId"],message:"Reopen the bill to check the selected payment option."});
   if (["gcash", "maya", "bank"].includes(data.method) && data.reference.length < 3) context.addIssue({ code: "custom", path: ["reference"], message: "Add the transaction reference so the owner can check it." });
+  if(data.destinationId && data.method!=="cash" && data.reference.length<3) context.addIssue({code:"custom",path:["reference"],message:"Add the transaction reference so the owner can check it."});
   if (data.method === "other" && data.note.length < 5) context.addIssue({ code: "custom", path: ["note"], message: "Describe the payment method in the note." });
   if (data.duplicateReason && data.duplicateReason.length < 5) context.addIssue({ code: "custom", path: ["duplicateReason"], message: "Explain the repeated reference in at least 5 characters." });
 });
@@ -25,6 +28,7 @@ export type RentalPaymentStatus = "pending" | "confirmed" | "rejected" | "cancel
 export type RentalPayment = {
   id: string; billId: string; ownerId: string; renterId: string; submittedBy: string; amountCents: number;
   method: keyof typeof paymentMethods; paidAt: string; reference: string; referenceKey: string | null; note: string;
+  destinationId?: string | null; destinationSnapshot?: string | null;
   status: RentalPaymentStatus; createdAt: string; createdDay: string;
   reviewedAt: string | null; reviewedBy: string | null; decisionReason: string | null; duplicateReason: string | null;
   reversedAt: string | null; reversedBy: string | null; reversalReason: string | null;

@@ -5,7 +5,6 @@ import { api } from "../lib/client";
 import { philippinesDay, pesoInputToCents, rentalDate, rentalMoney, type RentalConnection } from "../lib/rentals";
 import { billDateLabel, billDateStatus, billDefaults, billMonthLabel, billPeriodError, initialBillMonth, isBillingMonth, rentalBillAction, rentalBillInput, type CreateRentalBill, type RentalBill, type RentalBillDetail, type RentalBillWithBalance, type RentalBillsPage, type RentalBillSummary } from "../lib/rental-bills";
 import { billPaymentLabel, billPaymentState, type CreateRentalPayment, type RentalPaymentAction } from "../lib/rental-payments";
-import { HitpayBillSandbox } from "./hitpay-sandbox-client";
 import { PaymentPanel } from "./rental-payments";
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : "Please try again.";
@@ -97,7 +96,6 @@ export function BillDetail({ detail, userId, busy, back, refresh, cancel, replac
   return <div className="rental-connection-detail rent-bill-detail"><button className="rent-bill-back text-button" disabled={busy} onClick={back}><ArrowLeft size={15} />Back to rental</button>
     <div className="rental-detail-status"><span className={"status " + (bill.status === "voided" ? "rent-bill-state-voided" : "bill-payment-" + payment)}>{bill.status === "voided" ? "Cancelled" : billPaymentLabel(payment)}</span><button className="text-button" disabled={busy} onClick={refresh}><RefreshCw size={14} />Refresh bill</button></div>
     <section className="rent-bill-paper"><p className="eyebrow">Rent bill · {billMonthLabel(bill.month)}</p><h3>{rentalMoney(bill.amountCents)}</h3><p>{connection.propertyName} · {connection.unitName}</p><dl><div><dt>Covered from</dt><dd>{rentalDate(bill.periodStart)}</dd></div><div><dt>Covered until</dt><dd>{rentalDate(bill.periodEnd)}</dd></div><div><dt>Payment due</dt><dd>{rentalDate(bill.dueDate)}</dd></div><div><dt>Created</dt><dd>{rentalDate(bill.createdAt)}</dd></div></dl>{bill.note && <div className="rent-bill-note"><strong>Owner’s note</strong><p>{bill.note}</p></div>}</section>
-    <HitpayBillSandbox billId={bill.id} />
     <PaymentPanel detail={detail} userId={userId} busy={busy} record={recordPayment} act={reviewPayment} changePage={changePaymentPage} />
     {bill.source === "scheduled" && <p className="bill-created-automatically">Created automatically from the monthly billing setup enabled by the owner.</p>}
     {bill.status === "issued" && <div className="bill-share-controls"><button className="text-button" disabled={busy} onClick={() => void copyBill()}>{copied ? "Copied" : owner ? "Copy bill message" : "Copy private bill link"}</button><small className="form-help">Share it yourself. Malapit does not send a message.</small></div>}

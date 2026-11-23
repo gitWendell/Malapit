@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { rentalPayments } from "../db/schema";
+import { ownerPaymentMethods, rentalPayments } from "../db/schema";
+import { destinationSnapshot, readDestination, reportedMethod, type OwnerPaymentMethod } from "./owner-payment-methods";
 import type { AuthIdentity } from "./auth";
 import { accessibleBill } from "./rental-bills-server";
 import { getDb, HttpError } from "./server";
@@ -9,7 +10,7 @@ import { referenceKey, rentalPaymentAction, rentalPaymentInput, type RentalPayme
 
 export async function createRentalPayment(billId: string, input: unknown, user: AuthIdentity) {
   const data = rentalPaymentInput.parse(input), db = getDb(), id = data.requestId;
-  const values = { billId, amountCents: data.amountCents, method: data.method, paidAt: data.paidAt, reference: data.reference, note: data.note };
+  const values = { billId, amountCents: data.amountCents, method: data.method, paidAt: data.paidAt, reference: data.reference, note: data.note, destinationId: data.destinationId || null };
   function validateReceiptRole(owner: boolean) {
     if (owner && !data.receiptConfirmed) throw new HttpError(400, "Check your original records and confirm that you received this payment.");
     if (!owner && (data.receiptConfirmed || data.duplicateReason)) throw new HttpError(400, "Only the owner can confirm receipt or review a repeated reference.");
@@ -18,6 +19,7 @@ export async function createRentalPayment(billId: string, input: unknown, user: 
     const [row] = await db.select().from(rentalPayments).where(and(eq(rentalPayments.id, id), eq(rentalPayments.submittedBy, user.userId))).limit(1);
     if (!row) return false;
     validateReceiptRole(row.ownerId === user.userId);
+    if ((readDestination(row.destinationSnapshot)?.updatedAt || undefined) !== data.destinationVersion) throw new HttpError(409,"This request already saved another payment option. Refresh the bill.");
     if (!Object.entries(values).every(([key, value]) => row[key as keyof typeof row] === value) || row.ownerId === user.userId && (row.duplicateReason || "") !== data.duplicateReason) throw new HttpError(409, "This request already saved different payment details. Refresh the bill before trying again.");
     return true;
   };
@@ -27,8 +29,15 @@ export async function createRentalPayment(billId: string, input: unknown, user: 
   if (bill.status !== "issued") throw new HttpError(409, "This bill was cancelled. Open its current replacement before recording a payment.");
   if (bill.pendingCount) throw new HttpError(409, "This bill already has a payment awaiting confirmation. Review or cancel that report first.");
   if (data.amountCents > bill.remainingCents) throw new HttpError(409, "The amount exceeds this bill’s remaining balance in the records.");
+  let savedDestination: string | null = null;
+  if(data.destinationId){
+    const [method]=await db.select().from(ownerPaymentMethods).where(and(eq(ownerPaymentMethods.id,data.destinationId),eq(ownerPaymentMethods.ownerId,bill.ownerId))).limit(1);
+    if(!method||method.archivedAt||method.updatedAt!==data.destinationVersion)throw new HttpError(409,"The owner's payment details changed. Reopen the bill and check them before reporting a payment.");
+    if(reportedMethod(method.kind as OwnerPaymentMethod["kind"])!==data.method)throw new HttpError(400,"The payment method does not match the selected receiving account.");
+    savedDestination=JSON.stringify(destinationSnapshot(method as OwnerPaymentMethod));
+  }
   const now = new Date(), timestamp = now.toISOString();
-  try { await db.insert(rentalPayments).values({ id, ...values, ownerId: bill.ownerId, renterId: bill.renterId, submittedBy: user.userId, referenceKey: referenceKey(data.reference), status: owner ? "confirmed" : "pending", createdAt: timestamp, createdDay: philippinesDay(now), reviewedAt: owner ? timestamp : null, reviewedBy: owner ? user.userId : null, duplicateReason: owner && data.duplicateReason ? data.duplicateReason : null }); }
+  try { await db.insert(rentalPayments).values({ id, ...values, destinationSnapshot:savedDestination, ownerId: bill.ownerId, renterId: bill.renterId, submittedBy: user.userId, referenceKey: referenceKey(data.reference), status: owner ? "confirmed" : "pending", createdAt: timestamp, createdDay: philippinesDay(now), reviewedAt: owner ? timestamp : null, reviewedBy: owner ? user.userId : null, duplicateReason: owner && data.duplicateReason ? data.duplicateReason : null }); }
   catch (cause) { if (!await existing()) throw cause; }
   return { id };
 }

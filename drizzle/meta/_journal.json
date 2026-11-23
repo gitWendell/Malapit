@@ -71,6 +71,13 @@
       "when": 1795165562202,
       "tag": "0009_hitpay_sandbox_checkout",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1795167961888,
+      "tag": "0010_owner_receiving_details",
+      "breakpoints": true
     }
   ]
 }

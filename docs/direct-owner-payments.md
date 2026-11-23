@@ -1,0 +1,13 @@
+# Direct owner payments
+
+Owners use My Rentals → Payment setup to add GCash, Maya, bank, existing receiving QR, cash or another agreed option. A saved option applies across that owner's unpaid private rent bills. This does not create a wallet, bank account or merchant QR. Use receiving details and QR images issued by the owner's own bank or wallet.
+
+Renters choose Pay owner, select an option, copy receiving details or save a QR image, pay using their own bank/wallet app, then return and tap I’ve paid the owner. The remaining amount, current Philippine date and selected option are prefilled. Non-cash selected options require a transaction reference. A pending report does not reduce rent. The owner checks their original records and confirms receipt or asks for correction.
+
+Payment information is private to the owner and original renter with an unpaid bill. Public map listings, inquiries, other renters and listing reviewers cannot read it. Fully paid and cancelled bills do not expose current receiving options. Reports keep a server-created snapshot of the selected option; subsequent edits or removal do not change historical reports. An option changed during report submission is rejected before any record is created. A renter who used another agreed method can report it without falsely attaching the current option.
+
+QR uploads are converted to PNG by the browser, validated and stored in a separate private D1 table. They cannot be used as public listing photos. Limits: 200 KiB / 1200 pixels per image; five uploads per person per Philippine day; 20 saved images per person; 250 images and 32 MiB raw image bytes across the free test. Settings allow ten active options per owner, 100 stored per owner and 2,000 stored across the test. Removed options are archived. Original payment snapshots and their QR images remain readable by their original parties.
+
+No provider fee, charge, automatic deduction, payout service or paid storage subscription is activated. Bank/wallet fees and eligibility remain with those services. Malapit records owner-confirmed receipt; it does not independently verify transfers. New HitPay sandbox requests return HTTP 410; existing private test history is retained.
+
+Validation: 139 unit checks and 58 local API checks passed, including account/QR privacy, ownership, stale-detail rejection, idempotent reports, immutable receiving snapshots, partial confirmation and hidden current options after settlement. The browser flow was checked with fictional local data, including image upload, copy, QR download and renter-to-owner confirmation at phone width. No real money or real receiving account was used.

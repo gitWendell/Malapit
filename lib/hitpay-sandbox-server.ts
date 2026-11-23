@@ -37,33 +37,15 @@ export async function sandboxForBill(billId:string,user:AuthIdentity):Promise<Sa
  const bill=await accessibleBill(billId,user),owner=await boundOwner();
  if(!owner||owner!==bill.ownerId)return{available:false,checkout:null};
  const [row]=await getDb().select().from(hitpaySandboxCheckouts).where(eq(hitpaySandboxCheckouts.billId,billId)).orderBy(desc(hitpaySandboxCheckouts.createdAt)).limit(1);
- return{available:credentialsReady()&&bill.status==="issued",checkout:row?publicCheckout(row):null};
+ return{available:false,checkout:row?publicCheckout(row):null};
 }
 async function privateCheckout(id:string,user:AuthIdentity){
  if(!z.string().uuid().safeParse(id).success)throw new HttpError(404,"This test checkout is unavailable.");
  const [row]=await getDb().select().from(hitpaySandboxCheckouts).where(eq(hitpaySandboxCheckouts.id,id)).limit(1);
  if(!row)throw new HttpError(404,"This test checkout is unavailable.");await accessibleBill(row.billId,user);return row;
 }
-export async function createSandboxCheckout(billId:string,input:unknown,user:AuthIdentity,origin:string){
- const data=sandboxRequestInput.parse(input),bill=await accessibleBill(billId,user),db=getDb();
- if(!credentialsReady()||await boundOwner()!==bill.ownerId)throw new HttpError(503,"HitPay sandbox is not connected for this owner.");
- if(bill.status!=="issued")throw new HttpError(409,"This rent bill was cancelled. Open its current replacement.");
- const [existing]=await db.select().from(hitpaySandboxCheckouts).where(eq(hitpaySandboxCheckouts.id,data.requestId)).limit(1);
- if(existing){if(existing.billId!==billId)throw new HttpError(409,"This test request was already used for another bill.");return publicCheckout(existing);}
- const [open]=await db.select().from(hitpaySandboxCheckouts).where(and(eq(hitpaySandboxCheckouts.billId,billId),/* state is checked atomically by the unique index as well */eq(hitpaySandboxCheckouts.status,"pending"))).limit(1);
- if(open)return publicCheckout(open);
- const now=new Date().toISOString();
- try{await db.insert(hitpaySandboxCheckouts).values({id:data.requestId,billId,ownerId:bill.ownerId,renterId:bill.renterId,actorId:user.userId,businessId:env.HITPAY_SANDBOX_BUSINESS_ID!,createdAt:now,createdDay:philippinesDay(),updatedAt:now});}catch{
-  const state=await sandboxForBill(billId,user);if(state.checkout&&["creating","pending","unknown"].includes(state.checkout.status))return state.checkout;throw new HttpError(429,"Sandbox testing has reached its limit. Try again later.");
- }
- try{
-  const raw=await provider("/v1/payment-requests",{amount:1,currency:"SGD",payment_methods:["paynow_online"],purpose:"Malapit sandbox test only — no rent payment",reference_number:sandboxReference(data.requestId),redirect_url:origin+"/hitpay-return?checkout="+data.requestId,allow_repeated_payments:"false",expires_after:"30 mins",send_email:"false",send_sms:"false"});
-  const metadata=z.object({id:z.string().uuid(),reference_number:z.literal(sandboxReference(data.requestId))}).parse(raw);
-  await db.update(hitpaySandboxCheckouts).set({providerId:metadata.id}).where(eq(hitpaySandboxCheckouts.id,data.requestId));
-  const result=validateSandboxPayment(raw,data.requestId,metadata.id);
-  await db.update(hitpaySandboxCheckouts).set({providerId:result.id,checkoutUrl:result.checkoutUrl,status:result.status,updatedAt:new Date().toISOString(),verifiedAt:result.status==="completed"?new Date().toISOString():null}).where(and(eq(hitpaySandboxCheckouts.id,data.requestId),eq(hitpaySandboxCheckouts.status,"creating")));
- }catch(cause){await db.update(hitpaySandboxCheckouts).set({status:cause instanceof ProviderFailure&&cause.rejected?"failed":"unknown",updatedAt:new Date().toISOString()}).where(and(eq(hitpaySandboxCheckouts.id,data.requestId),eq(hitpaySandboxCheckouts.status,"creating")));throw new HttpError(502,"HitPay did not confirm this checkout. Refresh its status before trying again.");}
- return publicCheckout(await privateCheckout(data.requestId,user));
+export async function createSandboxCheckout(_billId:string,_input:unknown,_user:AuthIdentity,_origin:string){
+ throw new HttpError(410,"Sandbox checkout has been retired. Open the bill to view the owner’s payment options.");
 }
 async function refreshRow(row:typeof hitpaySandboxCheckouts.$inferSelect){
  if(!row.providerId&&["creating","unknown"].includes(row.status)){

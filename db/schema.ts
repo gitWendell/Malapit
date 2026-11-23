@@ -77,6 +77,7 @@ export const rentalPayments = sqliteTable("rental_payments", {
   amountCents: integer("amount_cents").notNull(), method: text("method").notNull(), paidAt: text("paid_at").notNull(), reference: text("reference").notNull().default(""), referenceKey: text("reference_key"), note: text("note").notNull().default(""),
   status: text("status").notNull(), createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(),
   reviewedAt: text("reviewed_at"), reviewedBy: text("reviewed_by"), decisionReason: text("decision_reason"), duplicateReason: text("duplicate_reason"),
+  destinationId: text("destination_id"), destinationSnapshot: text("destination_snapshot"),
   reversedAt: text("reversed_at"), reversedBy: text("reversed_by"), reversalReason: text("reversal_reason"),
 }, table => [
   uniqueIndex("rental_payment_pending_bill").on(table.billId).where(sql`${table.status} = 'pending'`),
@@ -121,3 +122,13 @@ export const hitpaySandboxCheckouts = sqliteTable("hitpay_sandbox_checkouts", {
   status: text("status").notNull().default("creating"), amountCents: integer("amount_cents").notNull().default(100), currency: text("currency").notNull().default("SGD"),
   createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(), updatedAt: text("updated_at").notNull(), verifiedAt: text("verified_at"),
 }, table => [index("hitpay_sandbox_bill").on(table.billId,table.createdAt), index("hitpay_sandbox_daily").on(table.actorId,table.createdDay), uniqueIndex("hitpay_sandbox_open_bill").on(table.billId).where(sql`${table.status} IN ('creating','pending','unknown')`), check("hitpay_sandbox_fixed_amount",sql`${table.amountCents}=100 AND ${table.currency}='SGD'`), check("hitpay_sandbox_status",sql`${table.status} IN ('creating','pending','unknown','completed','failed','expired','canceled','inactive')`)]);
+
+export const ownerPaymentQrs = sqliteTable("owner_payment_qrs", {
+  id: text("id").primaryKey(), ownerId: text("owner_id").notNull(), data: text("data").notNull(),
+  byteSize: integer("byte_size").notNull(), checksum: text("checksum").notNull(), createdAt: text("created_at").notNull(), createdDay: text("created_day").notNull(),
+}, table => [index("owner_payment_qrs_owner").on(table.ownerId,table.createdDay), check("owner_payment_qr_bytes",sql`${table.byteSize} BETWEEN 45 AND 204800`)]);
+export const ownerPaymentMethods = sqliteTable("owner_payment_methods", {
+  id: text("id").primaryKey(), ownerId: text("owner_id").notNull(), kind: text("kind").notNull(),
+  label: text("label").notNull().default(""), accountName: text("account_name").notNull().default(""), accountNumber: text("account_number").notNull().default(""), instructions: text("instructions").notNull().default(""),
+  qrImageId: text("qr_image_id").references(() => ownerPaymentQrs.id), createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(), archivedAt: text("archived_at"),
+}, table => [index("owner_payment_methods_owner").on(table.ownerId,table.archivedAt),check("owner_payment_method_kind",sql`${table.kind} IN ('gcash','maya','bank','qr','cash','other')`)]);

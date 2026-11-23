@@ -1,3 +1,2 @@
-import{HitpaySetup}from"../hitpay-sandbox-client";
-export const metadata={title:"HitPay sandbox setup · Malapit",robots:{index:false,follow:false}};
-export default function Page(){return<HitpaySetup/>;}
+export const metadata={title:"Payment setup · Malapit",robots:{index:false,follow:false}};
+export default function Page(){return <main className="workspace"><h1>Payment setup has moved</h1><p>Owners can now save their receiving account details and QR images in My Rentals. Sandbox checkout testing has been retired.</p><a className="button primary" href="/?view=rentals&rentalTab=payments">Open payment setup</a></main>;}
