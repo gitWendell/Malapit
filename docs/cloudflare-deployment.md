@@ -6,7 +6,11 @@ Do not activate Cloudflare R2, Zero Trust checkout, a paid Workers plan, Supabas
 
 ## Current public beta deployment
 
-November 26, 2026: version 0.2.0 is prepared for public website/PWA release at the existing origin. See [release notes](releases/0.2.0.md) for the current features, verification and remaining physical-device checks. Earlier dated entries below record the setup history.
+November 26, 2026: version 0.2.1 uses the public address https://malapit.malapit-ph.workers.dev/. The existing Worker was renamed in place; its D1 database, Supabase project, credentials and records stay the same. See [release notes](releases/0.2.1.md). Earlier dated entries below record the setup history.
+
+The old `malapit-test` address is a compatibility Worker defined in `wrangler.legacy.jsonc`. It redirects public pages and new sign-ins to the public address. Already-open tabs and in-flight auth callbacks forward through a private service binding to the main Worker, preserving the original request and its security checks. Deploy it separately with `npx wrangler deploy --config wrangler.legacy.jsonc` after the main app. It has no database, secrets or Cron trigger.
+
+Supabase Site URL is the public origin. Keep both exact `/auth/callback` return URLs allowed during the transition. The Google OAuth callback remains on Supabase. Host-only login cookies and notification permissions do not transfer to the new origin: users sign in and enable notifications again. No push subscriptions existed at the switch. The D1 name `malapit-test-db` is an internal identifier; do not create a replacement database for this address change.
 
 As of November 12, 2026, [Malapit](https://malapit-test.malapit-ph.workers.dev/) is deployed. Google Auth Platform shows External / In production, with the live homepage, privacy and terms links saved. The owner's actual Google login and explicit reviewer UUID are verified. An owner photo upload loaded successfully, was blocked for a signed-out visitor, and was removed afterward; no test listing was published. The privacy and terms routes return HTTP 200.
 
