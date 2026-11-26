@@ -7,7 +7,8 @@ test('old shared links preserve the destination on the public address', async ()
   for (const path of ['/?view=rentals&bill=example', '/guide', '/privacy/', '/terms', '/install', '/payment-demo', '/auth/signin?return_to=%2F%3Fview%3Dsaved']) {
     const response = await worker.fetch(new Request(oldOrigin + path), {});
     assert.equal(response.status, 307);
-    assert.equal(response.headers.get('location'), 'https://malapit.malapit-ph.workers.dev' + path);
+    const destination = path.startsWith('/auth/signin') ? '/?view=saved' : path;
+    assert.equal(response.headers.get('location'), 'https://malapit.pages.dev' + destination);
     assert.equal(response.headers.get('cache-control'), 'no-store');
   }
 });

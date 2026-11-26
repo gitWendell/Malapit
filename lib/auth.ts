@@ -1,6 +1,8 @@
 import { createServerClient, parseCookieHeader, serializeCookieHeader } from "@supabase/ssr";
 import { signInConfigured, supabaseOrigin, type SupabaseConfig } from "./supabase-config.ts";
 import { localTestAccount } from "./local-test-accounts.ts";
+import { safeReturnPath } from "./auth-return.ts";
+export { safeReturnPath } from "./auth-return.ts";
 
 export type AuthIdentity = { userId: string; displayName: string; email: string; isAdmin: boolean };
 export type AuthConfig = SupabaseConfig;
@@ -98,13 +100,4 @@ export function createRequestAuth(request: Request, config: AuthConfig, fetcher:
       return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     },
   };
-}
-
-export function safeReturnPath(value: string | null): string {
-  if (!value?.startsWith("/") || value.startsWith("//")) return "/";
-  try {
-    const url = new URL(value, "https://malapit.invalid");
-    if (url.origin !== "https://malapit.invalid" || /^\/(auth|cdn-cgi)(\/|$)/.test(url.pathname)) return "/";
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch { return "/"; }
 }

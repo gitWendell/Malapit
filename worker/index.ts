@@ -8,6 +8,7 @@ import { createRentReminders, dispatchNotifications, notificationMaintenance, pu
 import { pushDeviceCookie, removePushDevice } from "../lib/notifications-server";
 import { serveTutorialVideo, TUTORIAL_VIDEO_PATH } from "../lib/tutorial-video";
 import tutorialMedia from "../public/tutorial/malapit-how-to-media.json";
+import { publicAddressRedirect } from "../lib/public-address.mjs";
 
 const worker = {
   async scheduled(controller: ScheduledController, env: Cloudflare.Env) {
@@ -20,6 +21,8 @@ const worker = {
     await dispatchNotifications(env.DB,pushConfiguration(env),now);
   },
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
+    const addressRedirect = publicAddressRedirect(request);
+    if (addressRedirect) return addressRedirect;
     const url = new URL(request.url);
     if (url.pathname === TUTORIAL_VIDEO_PATH) return serveTutorialVideo(request, env.ASSETS, tutorialMedia.bytes);
     let auth;

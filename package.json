@@ -1,6 +1,6 @@
 {
   "name": "malapit-rentals",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -17,7 +17,8 @@
     "db:migrate:local": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --local --config wrangler.jsonc --persist-to .wrangler/state",
     "db:migrate:remote": "node scripts/cloudflare-deploy.mjs migrate",
     "deploy": "node scripts/cloudflare-deploy.mjs deploy",
-    "deploy:check": "node scripts/cloudflare-deploy.mjs check"
+    "deploy:check": "node scripts/cloudflare-deploy.mjs check",
+    "deploy:pages": "node scripts/cloudflare-pages-deploy.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

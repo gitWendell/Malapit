@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "malapit",
+  "pages_build_output_dir": "./public",
+  "compatibility_date": "2026-05-15",
+  "services": [],
+  "env": {
+    "production": {
+      "services": [{ "binding": "MALAPIT", "service": "malapit" }]
+    },
+    "preview": {
+      "services": []
+    }
+  }
+}

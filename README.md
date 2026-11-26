@@ -1,12 +1,12 @@
 # Malapit
 
-Public beta **0.2.1**, released November 26, 2026. [Open Malapit](https://malapit.malapit-ph.workers.dev/) · [Release notes](docs/releases/0.2.1.md). Published listings appear by default; fictional examples require an explicit preview.
+Public beta **0.2.2**, released November 26, 2026. [Open Malapit](https://malapit.pages.dev/) · [Release notes](docs/releases/0.2.2.md). Published listings appear by default; fictional examples require an explicit preview.
 
 A map-based rental marketplace for the Philippines. Renters can browse nearby homes and compare prices. Owners can submit properties, place map pins, upload photos, and manage inquiries. The same account also opens **My Rentals**, a private area for units and accepted owner–renter connections.
 
-[Open Malapit](https://malapit.malapit-ph.workers.dev/). Public browsing and Google sign-up are enabled. The owner's reviewer access and a real private photo upload have been verified. Read the published [privacy notice](https://malapit.malapit-ph.workers.dev/privacy) and [terms of use](https://malapit.malapit-ph.workers.dev/terms). A fresh second-account workflow and installation on a physical Android phone still need manual testing.
+[Open Malapit](https://malapit.pages.dev/). Public browsing and Google sign-up are enabled. The owner's reviewer access and a real private photo upload have been verified. Read the published [privacy notice](https://malapit.pages.dev/privacy) and [terms of use](https://malapit.pages.dev/terms). A fresh second-account workflow and installation on a physical Android phone still need manual testing.
 
-This public beta uses **Cloudflare Workers Free + D1 Free**, with **Supabase Free** for Google sign-in and private photos. It has separate data from the original hosted site. Deployment and provider setup are separate steps; working local tests do not mean live account access is configured.
+This public beta uses **Cloudflare Pages + Workers Free + D1 Free**, with **Supabase Free** for Google sign-in and private photos. It has separate data from the original hosted site. Deployment and provider setup are separate steps; working local tests do not mean live account access is configured.
 
 ## Features
 
@@ -27,7 +27,7 @@ This public beta uses **Cloudflare Workers Free + D1 Free**, with **Supabase Fre
 - Monthly owner reports in My Rentals → Reports, with per-unit balances, a unit filter and complete CSV downloads for the unit summary, bills and payment history. Totals use current records grouped by the bill's billing month; pending reports and cancelled bills are kept separate from confirmed credits.
 - Owner payment setup for GCash, Maya, bank details, receiving QR images, cash and other agreed methods. Private unpaid bills show copyable account details and downloadable QR images. Reports preserve the selected receiving details and await owner confirmation. See [direct owner payments](docs/direct-owner-payments.md).
 - Earlier provider test receipts remain private. New HitPay sandbox requests are retired; normal payment screens use the owner’s receiving details.
-- A phone-friendly [video and written guide](https://malapit.malapit-ph.workers.dev/guide), using fictional local demonstration data and English narration.
+- A phone-friendly [video and written guide](https://malapit.pages.dev/guide), using fictional local demonstration data and English narration.
 
 The 18 sample homes are fictional and labeled. They are separate from submitted listings. Sample inquiries do not contact anyone externally. Inquiry conversations keep the original question and earlier lister reply, then append follow-up messages from the renter, lister or existing reviewer. Replies update while a conversation is open. The notification bell shows messages, rental invitations, bills and payment updates. Optional browser/Android push needs permission; email and SMS are not sent. My Rentals invitations and bills appear inside the app; Malapit does not email them. Owners can create bills manually or opt into full-calendar-month bills after reviewing the rent and dates. Owners check their own original records before confirming receipt. Malapit does not collect, hold or transfer money. Owners provide receiving details and confirm their own receipts. Repairs, payment-proof uploads, live payment processing, paid promotions, email/SMS notifications, and automated ownership verification are not implemented.
 

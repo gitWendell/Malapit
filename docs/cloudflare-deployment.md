@@ -6,11 +6,25 @@ Do not activate Cloudflare R2, Zero Trust checkout, a paid Workers plan, Supabas
 
 ## Current public beta deployment
 
-November 26, 2026: version 0.2.1 uses the public address https://malapit.malapit-ph.workers.dev/. The existing Worker was renamed in place; its D1 database, Supabase project, credentials and records stay the same. See [release notes](releases/0.2.1.md). Earlier dated entries below record the setup history.
+Version 0.2.2 is deployed at https://malapit.pages.dev/ as the public website and installable app address. Pages uses a service binding to the existing `malapit` Worker; the same Worker retains all encrypted secrets, D1 records, Supabase photos and the five-minute schedule. No schema, account migration or paid plan is needed. See [release notes](releases/0.2.2.md).
 
-The old `malapit-test` address is a compatibility Worker defined in `wrangler.legacy.jsonc`. It redirects public pages and new sign-ins to the public address. Already-open tabs and in-flight auth callbacks forward through a private service binding to the main Worker, preserving the original request and its security checks. Deploy it separately with `npx wrangler deploy --config wrangler.legacy.jsonc` after the main app. It has no database, secrets or Cron trigger.
+`deploy/pages/wrangler.jsonc` defines the Pages production binding. Preview deployments have no service binding and their hostnames return 404. Every production request forwards to the existing app with its original URL, cookies, method, body and headers. All authorization and same-origin checks remain in the main app. Pages holds no secrets or database binding.
 
-Supabase Site URL is the public origin. Keep both exact `/auth/callback` return URLs allowed during the transition. The Google OAuth callback remains on Supabase. Host-only login cookies and notification permissions do not transfer to the new origin: users sign in and enable notifications again. No push subscriptions existed at the switch. The D1 name `malapit-test-db` is an internal identifier; do not create a replacement database for this address change.
+After the Pages project exists, deploy with:
+
+```sh
+npm run deploy:pages
+```
+
+The helper stages the small Pages entry in a temporary directory outside Vinext's generated config tree, bundles it with Wrangler, deploys to the `main` production branch, and removes only that temporary directory. It preserves the main app's generated deployment configuration. Deploy main app changes with the existing `npm run deploy` workflow; redeploy the Pages entry when its handler or public origin changes.
+
+Supabase's Site URL must be `https://malapit.pages.dev`, with its exact `/auth/callback` return URL allowed. Keep both earlier Workers callback URLs during the transition. Google's OAuth callback remains on Supabase. Only Site URL and redirect allow-list should change; do not replace the complete auth config.
+
+Both earlier Workers addresses redirect public pages to Pages. Old sign-in links land on the intended Pages screen; users start Google sign-in from there so the normal cross-site protections remain active. API calls, existing callbacks, sign-out and loaded assets keep their original host and security checks for already-open tabs. The `malapit-test` compatibility Worker remains in `wrangler.legacy.jsonc`; deploy it separately after changes to shared address routing. It has no database, secrets or Cron trigger.
+
+Host-only login cookies and notification permission do not transfer between addresses. Users sign in and enable notifications again on Pages; existing installations should be replaced from the new address. No push subscriptions existed before the Pages switch. Do not recreate or rename the existing internal D1 database `malapit-test-db`.
+
+The dated entries below record earlier setup steps.
 
 As of November 12, 2026, [Malapit](https://malapit-test.malapit-ph.workers.dev/) is deployed. Google Auth Platform shows External / In production, with the live homepage, privacy and terms links saved. The owner's actual Google login and explicit reviewer UUID are verified. An owner photo upload loaded successfully, was blocked for a signed-out visitor, and was removed afterward; no test listing was published. The privacy and terms routes return HTTP 200.
 
