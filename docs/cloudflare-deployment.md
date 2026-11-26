@@ -1,10 +1,12 @@
-# Free pilot deployment
+# Free public beta deployment
 
 Use **Cloudflare Workers Free + D1 Free** for the app and rental data, and **Supabase Free** for Google sign-in and private photos. Keep the separate Malapit organization on Free. This environment starts with new data; it does not copy accounts or submissions from the original hosted site.
 
 Do not activate Cloudflare R2, Zero Trust checkout, a paid Workers plan, Supabase Pro, paid branches, or paid add-ons for this pilot. The local photo emulator does not need an R2 subscription.
 
-## Current test deployment
+## Current public beta deployment
+
+November 26, 2026: version 0.2.0 is prepared for public website/PWA release at the existing origin. See [release notes](releases/0.2.0.md) for the current features, verification and remaining physical-device checks. Earlier dated entries below record the setup history.
 
 As of November 12, 2026, [Malapit](https://malapit-test.malapit-ph.workers.dev/) is deployed. Google Auth Platform shows External / In production, with the live homepage, privacy and terms links saved. The owner's actual Google login and explicit reviewer UUID are verified. An owner photo upload loaded successfully, was blocked for a signed-out visitor, and was removed afterward; no test listing was published. The privacy and terms routes return HTTP 200.
 
@@ -128,7 +130,7 @@ For a privacy request, verify the requester’s account and identify their owned
 
 ## Automatic bill operations
 
-The Worker checks due schedules every five minutes. Each run reads at most 12, with at most 49 D1 statements even if all creations fail, below the Free plan's 50 queries per invocation. Successful creation and schedule advancement are atomic. At the test's 100-active-unit limit, a normal month-start backlog needs up to nine runs. Check the Cloudflare Cron event outcomes and D1 quotas if bills are missing; free quotas or CPU limits can interrupt the job. A later run does not silently create bills for a missed month. Cron configuration changes may take up to 15 minutes to propagate.
+The Worker checks due schedules and notification jobs every five minutes. Each run reads at most eight billing schedules, leaving room for notification cleanup, due reminders and up to six push deliveries under the Free invocation limits. Successful creation and schedule advancement are atomic. At the test's 100-active-unit limit, a normal month-start billing backlog needs up to thirteen runs. Check the Cloudflare Cron event outcomes and D1 quotas if bills are missing; free quotas or CPU limits can interrupt the job. A later run does not silently create bills for a missed month. Cron configuration changes may take up to 15 minutes to propagate.
 
 Use the local workload smoke test to exercise the actual built scheduled handler with fictional data. Its separate runner omits assets only to avoid the installed Wrangler version's local Cron dispatch bug. Do not add a public scheduler URL or invoke local test endpoints on production. Deployed Cron invokes the scheduled handler directly. Logs contain aggregate counts only, without renter details.
 

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { ArrowDownToLine, Check, Copy, Smartphone } from "lucide-react";
 import { Modal } from "./ui";
+import { PUBLIC_SITE_URL } from "../lib/release";
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -40,7 +41,7 @@ export default function InstallApp() {
     finally { setBusy(false); }
   }
   const siteUrl = typeof window !== "undefined" && !["localhost", "127.0.0.1"].includes(window.location.hostname)
-    ? window.location.origin + "/" : "https://malapit-rentals-ph.curvedbugle.chatgpt.site/";
+    ? window.location.origin + "/" : PUBLIC_SITE_URL + "/";
   async function copyLink() {
     try { await navigator.clipboard.writeText(siteUrl); setCopied(true); }
     catch { setCopyFallback(true); }

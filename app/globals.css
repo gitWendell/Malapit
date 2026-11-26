@@ -425,3 +425,4 @@
 .property-location-marker:focus-visible{outline:3px solid var(--signal);outline-offset:3px;border-radius:12px}
 .picked-pin::after{content:"";display:block;width:8px;height:8px;border-radius:50%;background:#fff}
 @media(max-width:600px){.listing-location-fields{grid-template-columns:minmax(0,1fr)}.listing-location-fields .form-map{height:320px}}
+.empty-rental-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}.empty-rental-actions .button{margin-top:0}
