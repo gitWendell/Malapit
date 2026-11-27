@@ -3,6 +3,7 @@ import { z } from "zod";
 export const NOTIFICATION_LIMITS = { page: 20, stored: 10000, subscriptions: 500, devicesPerUser: 3, retentionDays: 60 };
 export const notificationCopy = {
   device_test: ["Malapit notifications are on", "This is your test alert. Open Malapit to see your rental updates."],
+  viewing: ["Viewing update", "A viewing request changed. Open the conversation to check the time and next steps."],
   inquiry: ["New rental inquiry", "A renter is interested in your place. Open the conversation to reply."],
   message: ["New rental message", "You have a new message in a rental conversation."],
   invitation: ["Rental details to review", "An owner has shared rental details with you. Review them before accepting."],
@@ -32,7 +33,7 @@ export const readNotificationsInput = z.union([
 
 export function notificationHref(kind: NotificationKind, target: string) {
   if(kind === "device_test") return "/?view=notifications";
-  if (kind === "inquiry" || kind === "message") return "/?view=inbox&inquiry=" + encodeURIComponent(target);
+  if (kind === "inquiry" || kind === "message" || kind === "viewing") return "/?view=inbox&inquiry=" + encodeURIComponent(target);
   if (["invitation", "accepted", "declined", "revoked", "ended"].includes(kind)) return "/?view=rentals&invite=" + encodeURIComponent(target);
   return "/?view=rentals&bill=" + encodeURIComponent(target);
 }

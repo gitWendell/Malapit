@@ -7,7 +7,12 @@ import { firstRentPeriod, inquiryRentalInput, type InquiryRentalSetup } from "./
 import { normalizeRentalEmail, philippinesDay, RENTAL_LIMITS } from "./rentals";
 
 // Explicit outer qualification is required inside this correlated D1 subquery.
-export const inquiryRentalSummary = sql<string | null>`(SELECT json_object('connectionId', c.id, 'status', CASE WHEN c.status = 'pending' AND c.expires_at <= strftime('%Y-%m-%dT%H:%M:%fZ','now') THEN 'expired' ELSE c.status END, 'billId', CASE WHEN c.status IN ('accepted','ended') THEN coalesce((SELECT b.id FROM rental_bills b WHERE b.connection_id=c.id AND b.status='issued' ORDER BY b.period_start DESC,b.created_at DESC,b.id DESC LIMIT 1),o.first_bill_id) ELSE NULL END) FROM inquiry_rental_offers o JOIN rental_connections c ON c.id = o.connection_id WHERE o.inquiry_id = inquiries.id ORDER BY c.created_at DESC, c.id DESC LIMIT 1)`;
+export const inquiryRentalSummary = sql<string | null>`(SELECT json_object('connectionId',c.id,'status',CASE WHEN c.status='pending' AND c.expires_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') THEN 'expired' ELSE c.status END,
+ 'billId',CASE WHEN c.status IN('accepted','ended') THEN coalesce(b.id,o.first_bill_id) ELSE NULL END,'billStatus',b.status,
+ 'remainingCents',CASE WHEN b.id IS NOT NULL THEN max(0,b.amount_cents-coalesce((SELECT sum(p.amount_cents) FROM rental_payments p WHERE p.bill_id=b.id AND p.status='confirmed'),0)) ELSE NULL END,
+ 'pendingPayment',EXISTS(SELECT 1 FROM rental_payments p WHERE p.bill_id=b.id AND p.status='pending'))
+ FROM inquiry_rental_offers o JOIN rental_connections c ON c.id=o.connection_id LEFT JOIN rental_bills b ON b.id=coalesce((SELECT latest.id FROM rental_bills latest WHERE latest.connection_id=c.id AND latest.status='issued' ORDER BY CASE WHEN EXISTS(SELECT 1 FROM rental_payments waiting WHERE waiting.bill_id=latest.id AND waiting.status='pending') THEN 0 WHEN latest.amount_cents>coalesce((SELECT sum(credited.amount_cents) FROM rental_payments credited WHERE credited.bill_id=latest.id AND credited.status='confirmed'),0) THEN 1 ELSE 2 END, CASE WHEN latest.amount_cents>coalesce((SELECT sum(credited.amount_cents) FROM rental_payments credited WHERE credited.bill_id=latest.id AND credited.status='confirmed'),0) THEN latest.due_date END ASC,latest.period_start DESC,latest.created_at DESC,latest.id DESC LIMIT 1),o.first_bill_id)
+ WHERE o.inquiry_id=inquiries.id ORDER BY c.created_at DESC,c.id DESC LIMIT 1)`;
 const unavailable = () => new HttpError(404, "This rental setup is not available to this account.");
 async function ownedInquiry(id: string, user: AuthIdentity) {
   const [row] = await getDb().select().from(inquiries).where(and(eq(inquiries.id, id), eq(inquiries.ownerId, user.userId))).limit(1);

@@ -6,7 +6,7 @@ Do not activate Cloudflare R2, Zero Trust checkout, a paid Workers plan, Supabas
 
 ## Current public beta deployment
 
-Version 0.2.2 is deployed at https://malapit.pages.dev/ as the public website and installable app address. Pages uses a service binding to the existing `malapit` Worker; the same Worker retains all encrypted secrets, D1 records, Supabase photos and the five-minute schedule. No schema, account migration or paid plan is needed. See [release notes](releases/0.2.2.md).
+Version 0.3.0 is deployed at https://malapit.pages.dev/ as the public website and installable app address. Pages uses a service binding to the existing `malapit` Worker; the same Worker retains all encrypted secrets, D1 records, Supabase photos and the five-minute schedule. The viewing feature adds D1 migration 0013. No account migration or paid plan is needed. See [release notes](releases/0.3.0.md).
 
 `deploy/pages/wrangler.jsonc` defines the Pages production binding. Preview deployments have no service binding and their hostnames return 404. Every production request forwards to the existing app with its original URL, cookies, method, body and headers. All authorization and same-origin checks remain in the main app. Pages holds no secrets or database binding.
 

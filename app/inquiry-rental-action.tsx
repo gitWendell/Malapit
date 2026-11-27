@@ -1,11 +1,14 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { House, LoaderCircle } from "lucide-react";
 import type { Inquiry } from "../lib/types";
 import { api } from "../lib/client";
 import { pesoInputToCents } from "../lib/rentals";
 import { firstRentPeriod, inquiryRentalInput, type InquiryRentalSetup } from "../lib/inquiry-rentals";
 import { monthBounds } from "../lib/rental-bills";
+import InquiryViewings from "./inquiry-viewings";
+import { inquiryNextStep } from "../lib/inquiry-next-step";
+import type { InquiryViewing } from "../lib/inquiry-viewings";
 import { Modal } from "./ui";
 
 const message = (error: unknown) => error instanceof Error ? error.message : "Please try again.";
@@ -15,13 +18,23 @@ function MoneyField({ label, value, change, help }: { label: string; value: stri
 }
 export default function InquiryRentalAction({ item, userId, refresh }: { item: Inquiry; userId: string; refresh: () => Promise<void> }) {
   const [setup, setSetup] = useState<InquiryRentalSetup | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [viewing, setViewing] = useState<InquiryViewing | null>(item.viewing || null);
+  useEffect(() => { setViewing(item.viewing || null); }, [item.viewing?.id, item.viewing?.version]);
   const owner = item.ownerId === userId;
   if (item.isDemo || !owner && item.renterId !== userId) return null;
-  const rental = item.rental, live = rental && ["pending", "accepted", "ended"].includes(rental.status);
+  const rental = item.rental, next = inquiryNextStep({ ...item, viewing }, userId)!;
+  const live = next.hasRental;
+  const steps = ["Inquiry sent", "Viewing (optional)", "Rental details", "Rent bill"];
   async function open() { setBusy(true); setError(""); try { setSetup(await api<InquiryRentalSetup>(`/api/inquiries/${item.id}/rental`, undefined, "GET")); } catch (cause) { setError(message(cause)); } finally { setBusy(false); } }
   return <section className="inquiry-rental-next" aria-label={`Rental and payment for ${item.listingTitle}`}>
-    <div><strong><House size={18} />{rental?.status === "accepted" ? "Your rental is connected" : rental?.status === "pending" ? "Rental details are ready" : rental?.status === "ended" ? "Past rental" : "Ready to rent this place?"}</strong><p>{rental?.status === "pending" ? owner ? "Waiting for the renter to review. Their first bill opens after they accept." : "Check the owner's rent, dates and first bill. Accept to add this place to I’m renting." : rental?.status === "accepted" ? "Open your rent bill and payment records in My Rentals." : owner ? "Send the agreed rental details to this renter. No need to add the property or type their email again." : "The owner must set up this rental before you can accept it and open a rent bill. An inquiry alone does not start a rental."}</p></div>
-    {live ? <a className="button primary" href={rental.status === "pending" ? `/?view=rentals&invite=${rental.connectionId}` : `/?view=rentals&bill=${rental.billId}`}>{rental.status === "pending" ? owner ? "View rental setup" : "Review rental" : "View rent bill"}</a> : owner && <button className="button primary" disabled={busy} onClick={() => void open()}>{busy ? <LoaderCircle size={17} className="spin" /> : <House size={17} />}Set up rental</button>}
+    <ol className="rental-progress" aria-label="Steps to rent this place">{steps.map((label, index) => {
+      const optional = index === 1 && next.stage >= 2 && viewing?.status !== "completed";
+      const state = optional ? "optional" : index < next.stage ? "done" : index === next.stage ? "current" : "upcoming";
+      return <li key={label} className={state} aria-current={state === "current" ? "step" : undefined}><span aria-hidden="true">{state === "done" ? "✓" : index + 1}</span><strong>{label}</strong>{optional && <small>Not recorded</small>}</li>;
+    })}</ol>
+    <div className="inquiry-next-heading"><strong>{next.title}</strong><p>{next.description}</p></div>
+    <InquiryViewings item={item} userId={userId} viewing={viewing} locked={live} updated={setViewing} refresh={refresh} />
+    {live ? <a className="button primary" href={rental?.status === "pending" || !rental?.billId ? `/?view=rentals&invite=${rental?.connectionId}` : `/?view=rentals&bill=${rental.billId}`}>{next.rentalAction}</a> : owner && <div className="inquiry-rental-setup"><p>{viewing?.status === "completed" ? "Ready to send the terms you agreed?" : "Already agreed to rent? You can skip the viewing."}</p><button className={`button ${viewing?.status === "completed" ? "primary" : "secondary"}`} disabled={busy} onClick={() => void open()}>{busy ? <LoaderCircle size={17} className="spin" /> : <House size={17} />}Set up rental</button></div>}
     {error && <p className="form-error" role="alert">{error}</p>}
     {setup && <Modal title="Set up this rental" className="rental-handoff-dialog" wide onClose={() => { if (!busy) setSetup(null); }}><SetupForm setup={setup} item={item} busy={busy} save={async input => { setBusy(true); try { const result = await api<{ id: string }>(`/api/inquiries/${item.id}/rental`, input); await refresh().catch(() => {}); window.location.assign(`/?view=rentals&invite=${result.id}`); } finally { setBusy(false); } }} /></Modal>}
   </section>;

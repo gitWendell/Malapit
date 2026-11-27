@@ -56,7 +56,7 @@ const worker = {
       if(auth.local)redirectHeaders.append("Set-Cookie",`__malapit_local_auth=${signOut ? "" : ["renter", "other"].includes(url.searchParams.get("test_as") ?? "") ? url.searchParams.get("test_as") : "1"}; Path=/; HttpOnly; SameSite=Lax${signOut ? "; Max-Age=0" : ""}`);
       return auth.response(new Response(null, { status:302, headers:redirectHeaders }));
     }
-    const user = await auth.identity(url.pathname === "/api/rentals" || url.pathname.startsWith("/api/rentals/") || url.pathname === "/api/notifications" || url.pathname.startsWith("/api/notifications/"));
+    const user = await auth.identity(url.pathname === "/api/data" || /^\/api\/inquiries\/[^/]+\/viewings$/.test(url.pathname) || url.pathname === "/api/rentals" || url.pathname.startsWith("/api/rentals/") || url.pathname === "/api/notifications" || url.pathname.startsWith("/api/notifications/"));
     let binding = ctx.props?.CONNECTORS;
     // Local preview emulates the same request-scoped capability. This branch and
     // the auxiliary service binding are absent from production builds.

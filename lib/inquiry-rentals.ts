@@ -15,7 +15,7 @@ export const inquiryRentalInput = z.object({
   if (value.firstBill.periodStart !== value.terms.leaseStart) ctx.addIssue({ code: "custom", path: ["firstBill"], message: "The first rent bill must start on the rental start date." });
 });
 export type InquiryRentalInput = z.infer<typeof inquiryRentalInput>;
-export type InquiryRentalSummary = { connectionId: string; status: RentalStatus; billId: string | null };
+export type InquiryRentalSummary = { connectionId: string; status: RentalStatus; billId: string | null; billStatus?: string | null; remainingCents?: number | null; pendingPayment?: boolean | number };
 export type FirstRentBill = { firstBillId: string; amountCents: number; periodStart: string; periodEnd: string; dueDate: string; note: string };
 export type InquiryRentalSetup = { terms: z.infer<typeof rentalUnitInput>; renterName: string; firstBill: InquiryRentalInput["firstBill"] };
 export function firstRentPeriod(leaseStart: string, leaseEnd: string | null) {

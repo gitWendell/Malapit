@@ -1,6 +1,6 @@
 # Malapit
 
-Public beta **0.2.2**, released November 26, 2026. [Open Malapit](https://malapit.pages.dev/) · [Release notes](docs/releases/0.2.2.md). Published listings appear by default; fictional examples require an explicit preview.
+Public beta **0.3.0**, released November 27, 2026. [Open Malapit](https://malapit.pages.dev/) · [Release notes](docs/releases/0.3.0.md). Published listings appear by default; fictional examples require an explicit preview.
 
 A map-based rental marketplace for the Philippines. Renters can browse nearby homes and compare prices. Owners can submit properties, place map pins, upload photos, and manage inquiries. The same account also opens **My Rentals**, a private area for units and accepted owner–renter connections.
 
@@ -12,6 +12,8 @@ This public beta uses **Cloudflare Pages + Workers Free + D1 Free**, with **Supa
 
 - OpenStreetMap with linked property cards and price pins, city search, budget and home filters.
 - Public browsing, account-owned saved homes, and two-way inquiry conversations with dated follow-ups and preserved earlier replies.
+- Clear next steps in each inquiry: optional viewing, agreed rental details, acceptance and the current rent bill.
+- Private viewing requests with Philippine times, recipient confirmation, rescheduling, cancellation and history. Confirmed appointments cannot overlap for either person; marking a listing rented or withdrawn cancels outstanding viewings.
 - Four-step property submission with map placement and up to five automatically compressed photos.
 - Clearable price and cost fields, province/city/barangay pickers, and a draggable or tappable property pin. Numeric coordinates are kept out of the form. The bundled PSA place names and approximate map hints are documented in [listing address data](docs/listing-location-data.md).
 - Administrator review, corrections, owner edits, pause, rented and withdrawn states.
@@ -36,6 +38,8 @@ Renters pay owners in their own bank or wallet app. Malapit does not automatical
 The [revenue proposal](docs/monetization-options.md) recommends optional owner management services and later featured listings. Monthly reports and downloads are now part of the free test. Its example prices are ideas to test, not active offers. Direct payment remains available; there are no Malapit subscriptions or transaction charges in the app.
 
 Follow-up messaging allows 100 new messages per person per Philippine day and 20,000 stored messages across the free test. The original inquiry and its earlier reply remain stored separately. History loads 30 messages at a time. Messages are appended rather than edited.
+
+Viewing requests are private to the original owner and renter, including for reviewers. They are limited to 20 proposals per person per Philippine day and 5,000 stored proposals across the free beta. The latest 20 appear in appointment history. Rescheduling preserves earlier appointments. Viewings do not reserve a property or create a rental or bill. The owner can skip the viewing and send agreed rental details; accepting still creates the first bill and connects My Rentals.
 
 ## Free pilot setup
 

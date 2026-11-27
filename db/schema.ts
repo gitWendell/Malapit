@@ -148,3 +148,22 @@ export const pushDeliveries = sqliteTable("push_deliveries", {
   attempts: integer("attempts").notNull().default(0), nextAttemptAt: text("next_attempt_at").notNull(), leaseUntil: text("lease_until"),
   sentAt: text("sent_at"), failedAt: text("failed_at"),
 }, table => [primaryKey({columns:[table.notificationId,table.subscriptionId]}), index("push_delivery_queue").on(table.sentAt,table.failedAt,table.nextAttemptAt)]);
+
+export const inquiryViewings = sqliteTable('inquiry_viewings', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }), id: text('id').notNull().unique(),
+  inquiryId: text('inquiry_id').notNull().references(() => inquiries.id), ownerId: text('owner_id').notNull(), renterId: text('renter_id').notNull(),
+  proposedBy: text('proposed_by').notNull(), startsAt: text('starts_at').notNull(), endsAt: text('ends_at').notNull(), note: text('note').notNull().default(''),
+  status: text('status').notNull().default('proposed'), version: integer('version').notNull().default(1),
+  updatedBy: text('updated_by').notNull(), decisionNote: text('decision_note').notNull().default(''), replacesId: text('replaces_id'),
+  createdAt: text('created_at').notNull(), createdDay: text('created_day').notNull(), updatedAt: text('updated_at').notNull(),
+}, table => [
+  index('inquiry_viewings_thread').on(table.inquiryId, table.seq), index('inquiry_viewings_daily').on(table.proposedBy, table.createdDay),
+  index('inquiry_viewings_owner_time').on(table.ownerId, table.status, table.startsAt), index('inquiry_viewings_renter_time').on(table.renterId, table.status, table.startsAt),
+  uniqueIndex('inquiry_viewings_active').on(table.inquiryId).where(sql`${table.status} IN ('proposed','confirmed')`),
+  uniqueIndex('inquiry_viewings_replacement').on(table.replacesId).where(sql`${table.replacesId} IS NOT NULL`),
+  check('inquiry_viewing_status', sql`${table.status} IN ('proposed','confirmed','completed','declined','cancelled')`),
+]);
+export const inquiryViewingEvents = sqliteTable('inquiry_viewing_events', {
+  seq: integer('seq').primaryKey({ autoIncrement: true }), viewingId: text('viewing_id').notNull().references(() => inquiryViewings.id),
+  action: text('action').notNull(), actorId: text('actor_id').notNull(), note: text('note').notNull().default(''), createdAt: text('created_at').notNull(),
+}, table => [index('inquiry_viewing_events_viewing').on(table.viewingId, table.seq)]);
