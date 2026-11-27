@@ -72,3 +72,9 @@ test('next steps cover both roles, optional viewings, acceptance, pending report
  const accepted={...item,rental:{status:'accepted',billStatus:'issued',remainingCents:800000,pendingPayment:1}};assert.equal(inquiryNextStep(accepted,'owner').rentalAction,'Review payment report');assert.equal(inquiryNextStep(accepted,'renter').title,'Waiting for payment confirmation');
  const paid={...accepted,rental:{...accepted.rental,pendingPayment:0,remainingCents:0}};assert.equal(inquiryNextStep(paid,'renter').stage,4);assert.equal(inquiryNextStep({...paid,rental:{...paid.rental,remainingCents:800000}},'renter').rentalAction,'Open rent bill');assert.equal(inquiryNextStep({...paid,rental:{...paid.rental,status:'ended'}},'renter').rentalAction,'View rental records');
 });
+
+test('unavailable homes stop viewing and rental setup without hiding an existing connected rental',()=>{
+ const item={ownerId:'owner',renterId:'renter',isDemo:false,listingStatus:'rented',viewing:{status:'cancelled'}};
+ for(const status of ['rented','withdrawn','changes_requested','pending',null]){const next=inquiryNextStep({...item,listingStatus:status},'renter');assert(next.viewingsClosed);assert.equal(next.rentalAction,'Find another place');}
+ assert(!inquiryNextStep({...item,listingStatus:'published'},'renter').viewingsClosed);assert(!inquiryNextStep({...item,listingStatus:'paused'},'owner').viewingsClosed);assert(inquiryNextStep({...item,rental:{status:'accepted',billStatus:'issued',remainingCents:800000}},'renter').hasRental);
+});

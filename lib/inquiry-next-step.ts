@@ -1,5 +1,5 @@
 import type { Inquiry } from './types';
-export type InquiryNextStep = { stage: number; title: string; description: string; rentalAction: string; hasRental: boolean };
+export type InquiryNextStep = { stage: number; title: string; description: string; rentalAction: string; hasRental: boolean; viewingsClosed?: boolean };
 export function inquiryNextStep(item: Inquiry, userId: string): InquiryNextStep | null {
   if(item.isDemo || ![item.ownerId,item.renterId].includes(userId))return null;
   const owner=item.ownerId===userId,rental=item.rental,viewing=item.viewing;
@@ -10,6 +10,7 @@ export function inquiryNextStep(item: Inquiry, userId: string): InquiryNextStep 
     if(rental.pendingPayment)return{stage:3,title:owner?'A payment report needs your review':'Waiting for payment confirmation',description:owner?'Check your own bank or wallet records, then confirm receipt or ask for a correction.':'Your report is with the owner. The balance changes after they confirm receipt.',rentalAction:owner?'Review payment report':'View payment status',hasRental:true};
     return{stage:3,title:'Your rental is connected',description:owner?'Open the rent bill to see its balance and payment records.':'Open the bill, choose the owner’s payment option and report your payment after sending it.',rentalAction:owner?'View rent bill':'Open rent bill',hasRental:true};
   }
+  if(item.listingStatus !== undefined && !['published','paused'].includes(item.listingStatus ?? ''))return{stage:1,title:'This property is no longer available',description:'This listing is no longer accepting viewing requests or new rental setups. Your conversation and viewing history remain here.',rentalAction:'Find another place',hasRental:false,viewingsClosed:true};
   if(viewing?.status==='completed')return{stage:2,title:'Viewing complete. Agree the rental details.',description:owner?'When you have both agreed to rent, send the renter the rent, dates and first bill.':'Discuss the rent and dates with the owner. They can then send rental details for you to review.',rentalAction:'Set up rental',hasRental:false};
   if(viewing?.status==='confirmed')return{stage:1,title:'Your viewing is confirmed',description:'Check the agreed time and private meeting note below. You can suggest another time if plans change.',rentalAction:'Set up rental',hasRental:false};
   if(viewing?.status==='proposed')return{stage:1,title:viewing.proposedBy===userId?'Your viewing request is waiting':'A viewing time needs your reply',description:viewing.proposedBy===userId?'The other person needs to confirm this time. You can suggest another time or cancel.':'Confirm the proposed time, suggest another time, or decline. All times are Philippine time.',rentalAction:'Set up rental',hasRental:false};

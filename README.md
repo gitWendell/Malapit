@@ -1,6 +1,6 @@
 # Malapit
 
-Public beta **0.3.0**, released November 27, 2026. [Open Malapit](https://malapit.pages.dev/) · [Release notes](docs/releases/0.3.0.md). Published listings appear by default; fictional examples require an explicit preview.
+Public beta **0.3.1**, released November 27, 2026. [Open Malapit](https://malapit.pages.dev/) · [Release notes](docs/releases/0.3.1.md). Published listings appear by default; fictional examples require an explicit preview.
 
 A map-based rental marketplace for the Philippines. Renters can browse nearby homes and compare prices. Owners can submit properties, place map pins, upload photos, and manage inquiries. The same account also opens **My Rentals**, a private area for units and accepted owner–renter connections.
 
